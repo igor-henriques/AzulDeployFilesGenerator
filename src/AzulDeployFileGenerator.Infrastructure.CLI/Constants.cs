@@ -1,14 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace AzulDeployFileGenerator.CLI;
 
-namespace AzulDeployFileGenerator.CLI
+internal static class Constants
 {
-    internal static class Constants
+    internal const string OUTPUT_COMMAND_TYPE = "output";
+
+    internal static Dictionary<string, string[]> CommandTriggers = new Dictionary<string, string[]>()
     {
-        public const string SHORT_OUTPUT_COMMAND = "-o";
-        public const string FULL_OUTPUT_COMMAND = "-output";
-    }
+        { OUTPUT_COMMAND_TYPE, new[] { "-o", "-output"} }
+    };
 }
