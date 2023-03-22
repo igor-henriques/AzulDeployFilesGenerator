@@ -18,6 +18,8 @@ internal sealed class FileGeneratorOrchestrator : IOrchestrator
 
     public async Task OrchestrateAsync(CancellationToken cancellationToken = default)
     {
-        await _solutionFilesService.GetFileContent(_cliOptions.Value.SolutionPath, "appsettings.json");
+        _logger.LogInformation("Looking for {fileName}", Constants.FileNames.AppSettings);
+        var appsettings = await _solutionFilesService.GetFileContent(_cliOptions.Value.SolutionPath, Constants.FileNames.AppSettings);
+        await Console.Out.WriteLineAsync(appsettings);
     }
 }

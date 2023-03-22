@@ -11,7 +11,6 @@ public sealed record CliCommandOptions
         return this;
     }
 
-    //set output path
     public CliCommandOptions SetOutputPath(string outputPath)
     {
         OutputPath = outputPath;

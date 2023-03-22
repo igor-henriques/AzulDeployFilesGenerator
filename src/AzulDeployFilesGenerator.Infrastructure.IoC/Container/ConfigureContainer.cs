@@ -1,11 +1,9 @@
-﻿using AzulDeployFilesGenerator.Application.Services;
-
-namespace AzulDeployFilesGenerator.Infrastructure.IoC.Container;
+﻿namespace AzulDeployFilesGenerator.Infrastructure.IoC.Container;
 
 public static class ConfigureContainer
 {
     public static IHostBuilder ConfigureDependencies(this IHostBuilder hostBuilder)
-    {
+    {        
         hostBuilder.ConfigureServices(services =>
         {
             services.InjectServices();
