@@ -1,8 +1,7 @@
 {
   "profiles": {
     "AzulDeployFilesGenerator.Application": {
-      "commandName": "Project",
-      "commandLineArgs": "-o teste"
+      "commandName": "Project"
     }
   }
 }

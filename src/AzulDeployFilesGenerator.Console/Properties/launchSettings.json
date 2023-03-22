@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "AzulDeployFilesGenerator.Console": {
+      "commandName": "Project",
+      "commandLineArgs": "-output . --solution-path akfokefopke"
+    }
+  }
+}

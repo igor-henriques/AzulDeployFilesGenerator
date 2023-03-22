@@ -1,1 +1,2 @@
-﻿global using AzulDeployFileGenerator.CLI.Models;
+﻿global using AzulDeployFileGenerator.Domain;
+global using AzulDeployFileGenerator.Infrastructure.CLI.Models;

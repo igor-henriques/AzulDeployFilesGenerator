@@ -7,6 +7,18 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AzulDeployFilesGenerator.Ap
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AzulDeployFileGenerator.Infrastructure.CLI", "AzulDeployFileGenerator.Infrastructure.CLI\AzulDeployFileGenerator.Infrastructure.CLI.csproj", "{4A246AAD-7025-411E-AA5F-43357045F7F6}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AzulDeployFileGenerator.Domain", "AzulDeployFileGenerator.Domain\AzulDeployFileGenerator.Domain.csproj", "{92DF98AE-BA82-40DA-AB8D-F7223554A6D3}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AzulDeployFilesGenerator.Console", "AzulDeployFilesGenerator.Console\AzulDeployFilesGenerator.Console.csproj", "{192FFDE8-6A55-4B4E-8D04-611CEF9B940A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{55270216-85B7-4B5E-B50D-2544534F529A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{61790566-A6D6-4694-A1CD-33B4BA19D262}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AzulDeployFilesGenerator.Infrastructure.IoC", "AzulDeployFilesGenerator.Infrastructure.IoC\AzulDeployFilesGenerator.Infrastructure.IoC.csproj", "{AFA5E564-BC32-4CD6-8F35-6001DB2115FB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AzulDeployFileGenerator.UnitTests", "AzulDeployFileGenerator.UnitTests\AzulDeployFileGenerator.UnitTests.csproj", "{E7949155-3641-4D6F-8174-017D87D3A53B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,9 +33,33 @@ Global
 		{4A246AAD-7025-411E-AA5F-43357045F7F6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4A246AAD-7025-411E-AA5F-43357045F7F6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4A246AAD-7025-411E-AA5F-43357045F7F6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{92DF98AE-BA82-40DA-AB8D-F7223554A6D3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{92DF98AE-BA82-40DA-AB8D-F7223554A6D3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{92DF98AE-BA82-40DA-AB8D-F7223554A6D3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{92DF98AE-BA82-40DA-AB8D-F7223554A6D3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{192FFDE8-6A55-4B4E-8D04-611CEF9B940A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{192FFDE8-6A55-4B4E-8D04-611CEF9B940A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{192FFDE8-6A55-4B4E-8D04-611CEF9B940A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{192FFDE8-6A55-4B4E-8D04-611CEF9B940A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AFA5E564-BC32-4CD6-8F35-6001DB2115FB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AFA5E564-BC32-4CD6-8F35-6001DB2115FB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AFA5E564-BC32-4CD6-8F35-6001DB2115FB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AFA5E564-BC32-4CD6-8F35-6001DB2115FB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E7949155-3641-4D6F-8174-017D87D3A53B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E7949155-3641-4D6F-8174-017D87D3A53B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E7949155-3641-4D6F-8174-017D87D3A53B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E7949155-3641-4D6F-8174-017D87D3A53B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{7039AA7A-4E39-40E0-979C-36A2177D79EE} = {55270216-85B7-4B5E-B50D-2544534F529A}
+		{4A246AAD-7025-411E-AA5F-43357045F7F6} = {55270216-85B7-4B5E-B50D-2544534F529A}
+		{92DF98AE-BA82-40DA-AB8D-F7223554A6D3} = {55270216-85B7-4B5E-B50D-2544534F529A}
+		{192FFDE8-6A55-4B4E-8D04-611CEF9B940A} = {55270216-85B7-4B5E-B50D-2544534F529A}
+		{AFA5E564-BC32-4CD6-8F35-6001DB2115FB} = {55270216-85B7-4B5E-B50D-2544534F529A}
+		{E7949155-3641-4D6F-8174-017D87D3A53B} = {61790566-A6D6-4694-A1CD-33B4BA19D262}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E8F8A716-0653-47A3-9169-AB0AE59E07EF}
