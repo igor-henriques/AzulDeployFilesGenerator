@@ -2,7 +2,7 @@
   "profiles": {
     "AzulDeployFilesGenerator.Console": {
       "commandName": "Project",
-      "commandLineArgs": "-output . --solution-path C:\\Users\\User\\Downloads\\b00b1e"
+      "commandLineArgs": "-output . --solution-path C:\\Users\\User\\source\\repos\\Maintenance.Equipment.OpenAirlines.Cron"
     }
   }
 }

@@ -1,9 +1,12 @@
-﻿namespace AzulDeployFilesGenerator.Infrastructure.IoC.Container;
+﻿using AzulDeployFileGenerator.Domain.Models.AppSettingsObjects;
+using AzulDeployFileGenerator.Domain.Models.Cli;
+
+namespace AzulDeployFilesGenerator.Infrastructure.IoC.Container;
 
 public static class ConfigureContainer
 {
     public static IHostBuilder ConfigureDependencies(this IHostBuilder hostBuilder)
-    {        
+    {
         hostBuilder.ConfigureServices(services =>
         {
             services.InjectServices();
@@ -48,5 +51,7 @@ public static class ConfigureContainer
         });
         services.AddSingleton<IOrchestrator, FileGeneratorOrchestrator>();
         services.AddSingleton<ISolutionFilesService, SolutionFilesService>();
+        services.AddSingleton<ICliService, CliService>();
+        services.AddTransient<IValidator<AppSettings>, AppSettingsValidator>();
     }
 }

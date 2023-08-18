@@ -8,8 +8,11 @@ public static class Constants
         public const string FILE_NOT_FOUND_ERROR_MESSAGE = "File {0} were not found in the specified solution path.";
     }
 
-    public static class FileNames 
+    public static class FileNames
     {
         public const string AppSettings = "appsettings.json";
+        public const string AppSettingsOnline = "appsettings.Online.json";
+        public const string AppSettingsDocker = "appsettings.Docker.json";
+        public const string K8sYaml = "k8sdeploy.yaml";
     }
 }
