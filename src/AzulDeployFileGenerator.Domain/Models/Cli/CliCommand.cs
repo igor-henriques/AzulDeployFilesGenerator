@@ -79,7 +79,7 @@ public sealed record CliCommand
 
         sb.AppendLine($"Setting the output path to the generated files: {string.Join(" or ", CliCommandTriggers[OUTPUT_PATH_COMMAND_ID])}");
         sb.AppendLine($"Setting the solution path which the generator will work on: {string.Join(" or ",CliCommandTriggers[SOLUTION_PATH_COMMAND_ID])}");
-        sb.AppendLine($"Setting the app type so the generator creates the right deploy files: {string.Join(" or ", CliCommandTriggers[APP_TYPE_COMMAND_ID])}");
+        sb.AppendLine($"Setting the app type so the generator creates the right deploy files: {string.Join(" or ", CliCommandTriggers[APP_TYPE_COMMAND_ID])} [{string.Join("/", DefaultAppTypes)}]");
 
         return sb.ToString();
     }
