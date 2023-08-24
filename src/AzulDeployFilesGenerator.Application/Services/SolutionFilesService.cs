@@ -149,8 +149,8 @@ internal sealed class SolutionFilesService : ISolutionFilesService
                 {
                     string tokenString = path + jsonPropName;
 
-                    if (obj.GetType().GetProperty("parameters") != null 
-                        /*&& jsonPropName.Equals("value", StringComparison.OrdinalIgnoreCase)*/)
+                    if (obj.GetType().Name is "Parameter"
+                        && jsonPropName.Equals("Value", StringComparison.OrdinalIgnoreCase))
                     {
                         tokenString = tokenString[..tokenString.LastIndexOf('.')];
                     }
