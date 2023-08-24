@@ -4,11 +4,22 @@ public static class CliParser
 {
     public static IEnumerable<CliCommand> ParseArgsAsCommands(string[] args)
     {
-        if (!args.Any())
+        if (args.Any(a => a.Contains(CliCommand.HELP_COMMAND_ID)))
+        {
+            Console.Out.WriteLine(CliCommand.GetHelpCommands());
+            Environment.Exit(0);
+        }
+
+        if (!args.Any(a =>
+        {
+            return a.Replace("-", string.Empty) is CliCommand.OUTPUT_PATH_COMMAND_ID 
+                     or CliCommand.SOLUTION_PATH_COMMAND_ID 
+                     or CliCommand.APP_TYPE_COMMAND_ID;
+        }))
         {
             throw new ApplicationException(Constants.Messages.INSUFFICIENT_ARGUMENTS_ERROR_MESSAGE);
         }
-
+        
         var triggersIndexes = GetIndexesWhereContainsDashes(args);
 
         foreach (var triggerIndex in triggersIndexes)
@@ -17,7 +28,7 @@ public static class CliParser
 
             if (!IsTriggerKnown(argTrigger))
             {
-                throw new ApplicationException($"The argument '{argTrigger}' is not valid.");
+                throw new ApplicationException(string.Format(Constants.Messages.INVALID_ARG_TRIGGER_ERROR_MESSAGE, argTrigger));
             }
 
             var argContent = args.ElementAt(triggerIndex + 1);
@@ -38,7 +49,6 @@ public static class CliParser
     private static bool IsTriggerKnown(string trigger)
     {
         return CliCommand.CliCommandTriggers
-            .Where(command => command.Value.Contains(trigger))
-            .Any();
+            .Any(command => command.Value.Contains(trigger));            
     }
 }

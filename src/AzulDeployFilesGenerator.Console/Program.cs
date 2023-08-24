@@ -20,7 +20,7 @@ try
 }
 catch (Exception ex)
 {
-    logger.LogError("{exception}\n\nPress any key to exit.", ex.Message);
+    logger.LogError(Constants.Messages.GLOBAL_EXCEPTION_HANDLER_ERROR_MESSAGE, ex.Message);
     Console.ReadKey();
     Environment.Exit(Environment.ExitCode);
 }

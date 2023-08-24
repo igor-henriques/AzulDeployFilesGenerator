@@ -6,21 +6,20 @@ public sealed class CliService : ICliService
 {
     private readonly List<CliFileGenerateModel> _files = new()
     {
-        new("appsettings.Docker.json", false),
-        new("appsettings.Online.json", false)
-        //new("k8sdeploy.yaml", true),
-        //new("tokenizer sheet", true)
+        new(fileName: "appsettings.Docker.json", isToGenerate: false),
+        new(fileName: "appsettings.Online.json", isToGenerate:false),
+        new(fileName: "k8sdeploy.yaml", isToGenerate:false),
+        new(fileName: "tokenizer sheet", isToGenerate:false)
     };
 
     /// <summary>
     /// Interacts with the user via command line input to get the files to generate.
-    /// </summary>
-    /// <returns></returns>
+    /// </summary>    
     public List<CliFileGenerateModel> GetRequestedFilesToGenerate()
     {
         while (true)
         {
-            Console.Out.WriteLine("\nWrite the relative number to set as false/true, or 'q' to leave:");
+            Console.Out.WriteLine(Constants.Messages.FILES_TO_GENERATE_INFO_MESSAGE);
 
             PrintCurrentOptionsChoices();
 
@@ -36,7 +35,7 @@ public sealed class CliService : ICliService
             }
             else
             {
-                Console.WriteLine("Invalid input. Press any key to continue...");
+                Console.WriteLine(Constants.Messages.INVALID_INPUT_ERROR_MESSAGE);
                 Console.ReadKey();
             }
 
@@ -48,7 +47,7 @@ public sealed class CliService : ICliService
 
     private void PrintCurrentOptionsChoices()
     {
-        Console.Out.Write("\n");
+        Console.Out.Write('\n');
 
         for (int i = 0; i < _files.Count; i++)
         {

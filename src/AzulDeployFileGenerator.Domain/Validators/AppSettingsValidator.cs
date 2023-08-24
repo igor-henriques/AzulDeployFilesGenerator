@@ -1,5 +1,4 @@
-﻿using AzulDeployFileGenerator.Domain.Models.AppSettingsObjects;
-using AzulDeployFileGenerator.Domain.Models.Cli;
+﻿using System.Reflection;
 
 namespace AzulDeployFileGenerator.Domain.Validators;
 
@@ -36,16 +35,36 @@ public sealed class AppSettingsValidator : IValidator<AppSettings>
         cancellationToken.ThrowIfCancellationRequested();
 
         var type = appSettings.GetType();
-        foreach (var props in type.GetProperties())
-        {
-            var value = props.GetValue(appSettings);
-            if (value is string or null && string.IsNullOrWhiteSpace(value?.ToString())
-                || (props.PropertyType.IsValueType && value.GetType() != typeof(bool) && Activator.CreateInstance(props.PropertyType).Equals(value)))
+        foreach (var prop in type.GetProperties())
+        {          
+            if (prop.Name.Contains(AppSettings.EXTRA_PROPERTIES_NAME))
             {
-                _errors.Add($"Property {props.Name} is null or empty.");
+                continue;
             }
-            else if (props.PropertyType.IsClass
-                && !typeof(IEnumerable<object>).IsAssignableFrom(props.PropertyType)
+
+            if (prop.GetIndexParameters().Length > 0)
+            {
+                continue;
+            }
+
+            var value = prop.GetValue(appSettings);
+
+            var jsonPropertyAttribute = prop.GetCustomAttribute<JsonPropertyAttribute>();
+            if (jsonPropertyAttribute != null 
+                && jsonPropertyAttribute.NullValueHandling == NullValueHandling.Ignore
+                && value is string or null
+                && string.IsNullOrWhiteSpace(value?.ToString()))
+            {
+                continue;
+            }                
+            
+            if (value is string or null && string.IsNullOrWhiteSpace(value?.ToString())
+                || (prop.PropertyType.IsValueType && value.GetType() != typeof(bool) && Activator.CreateInstance(prop.PropertyType).Equals(value)))
+            {
+                _errors.Add($"Property {prop.Name} is null or empty.");
+            }
+            else if (prop.PropertyType.IsClass
+                && !typeof(IEnumerable<object>).IsAssignableFrom(prop.PropertyType)
                 && !value.GetType().Equals(typeof(string)))
             {
                 await ValidateEmptyFields(value, cancellationToken);
@@ -59,6 +78,7 @@ public sealed class AppSettingsValidator : IValidator<AppSettings>
             }
         }
     }
+
 
     private async Task ValidateServiceClients(List<ServiceClient> serviceClients, CancellationToken cancellationToken = default)
     {
@@ -75,9 +95,9 @@ public sealed class AppSettingsValidator : IValidator<AppSettings>
         {
             _logger.LogInformation("Start validating service client Id {id}", serviceClient.Id);
 
-            bool isServiceClientValid = await _solutionFilesService.AnyClassContainsString(
+            bool isServiceClientValid = await _solutionFilesService.AnySolutionClassContainsText(
                 _cliOptions.Value.SolutionPath,
-                serviceClient.FormattedIdForSearchingInClasses,
+                serviceClient.FormattedIdForSearchingInSolutionClasses,
                 cancellationToken);
 
             if (!isServiceClientValid)

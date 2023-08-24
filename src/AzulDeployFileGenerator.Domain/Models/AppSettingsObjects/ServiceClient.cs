@@ -15,5 +15,5 @@ public sealed record ServiceClient
     public List<Parameter> Parameters { get; init; }
 
     [JsonIgnore]
-    public string FormattedIdForSearchingInClasses => $"public override string ServiceClientId => \"{Id}\";";
+    public string FormattedIdForSearchingInSolutionClasses => $"public override string ServiceClientId => \"{Id}\";";
 }

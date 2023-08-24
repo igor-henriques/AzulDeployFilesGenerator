@@ -1,7 +1,4 @@
-﻿using AzulDeployFileGenerator.Domain.Models.AppSettingsObjects;
-using AzulDeployFileGenerator.Domain.Models.Cli;
-
-namespace AzulDeployFilesGenerator.Application.Orchestrators;
+﻿namespace AzulDeployFilesGenerator.Application.Orchestrators;
 
 internal sealed class FileGeneratorOrchestrator : IOrchestrator
 {

@@ -6,7 +6,6 @@ public interface ICliService
 {
     /// <summary>
     /// Interacts with the user via command line input to get the files to generate.
-    /// </summary>
-    /// <returns></returns>
+    /// </summary>    
     List<CliFileGenerateModel> GetRequestedFilesToGenerate();
 }

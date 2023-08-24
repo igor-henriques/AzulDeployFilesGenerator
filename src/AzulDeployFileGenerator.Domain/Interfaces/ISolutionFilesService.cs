@@ -1,6 +1,4 @@
-﻿using AzulDeployFileGenerator.Domain.Models.AppSettingsObjects;
-
-namespace AzulDeployFileGenerator.Domain.Interfaces;
+﻿namespace AzulDeployFileGenerator.Domain.Interfaces;
 
 public interface ISolutionFilesService
 {
@@ -20,7 +18,7 @@ public interface ISolutionFilesService
     /// <param name="relativePath"></param>
     /// <param name="content"></param>
     /// <returns></returns>
-    Task<bool> AnyClassContainsString(string relativePath, string content, CancellationToken cancellationToken = default);
+    Task<bool> AnySolutionClassContainsText(string relativePath, string content, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Generates the appsettings.json file for the online environment.

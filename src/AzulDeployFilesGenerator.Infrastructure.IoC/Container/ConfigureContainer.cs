@@ -1,7 +1,4 @@
-﻿using AzulDeployFileGenerator.Domain.Models.AppSettingsObjects;
-using AzulDeployFileGenerator.Domain.Models.Cli;
-
-namespace AzulDeployFilesGenerator.Infrastructure.IoC.Container;
+﻿namespace AzulDeployFilesGenerator.Infrastructure.IoC.Container;
 
 public static class ConfigureContainer
 {
@@ -26,6 +23,7 @@ public static class ConfigureContainer
     {
         var solutionPath = commands.FirstOrDefault(command => command.IsSolutionPathCommandType)?.Content;
         var outputPath = commands.FirstOrDefault(command => command.IsOutputPathCommandType)?.Content;
+        var appType = commands.FirstOrDefault(command => command.IsAppTypeCommandType)?.Content;
 
         if (string.IsNullOrEmpty(solutionPath) || string.IsNullOrEmpty(outputPath))
         {
@@ -35,7 +33,8 @@ public static class ConfigureContainer
         hostBuilder.ConfigureServices(services => services.Configure<CliCommandOptions>(options =>
         {
             options.SetSolutionPath(solutionPath)
-                   .SetOutputPath(outputPath);
+                   .SetOutputPath(outputPath)
+                   .SetApplicationType(appType);
         }));
 
         return hostBuilder;

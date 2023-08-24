@@ -3,3 +3,8 @@ global using AzulDeployFileGenerator.Domain.Interfaces;
 global using Microsoft.Extensions.Logging;
 global using Microsoft.Extensions.Options;
 global using Newtonsoft.Json;
+global using AzulDeployFileGenerator.Domain.Models.AppSettingsObjects;
+global using AzulDeployFileGenerator.Domain.Models.Cli;
+global using Newtonsoft.Json.Linq;
+global using System.Collections;
+global using System.Reflection;

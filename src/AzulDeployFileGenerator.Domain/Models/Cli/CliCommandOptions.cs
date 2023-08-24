@@ -4,6 +4,7 @@ public sealed record CliCommandOptions
 {
     public string SolutionPath { get; private set; }
     public string OutputPath { get; private set; }
+    public string ApplicationType { get; private set; }
 
     public CliCommandOptions SetSolutionPath(string solutionPath)
     {
@@ -14,6 +15,12 @@ public sealed record CliCommandOptions
     public CliCommandOptions SetOutputPath(string outputPath)
     {
         OutputPath = outputPath;
+        return this;
+    }
+
+    public CliCommandOptions SetApplicationType(string applicationType)
+    {
+        ApplicationType = applicationType;
         return this;
     }
 }

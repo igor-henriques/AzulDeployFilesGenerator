@@ -2,8 +2,10 @@
 
 public sealed record CliCommand
 {
-    private const string OUTPUT_PATH_COMMAND_ID = "output";
-    private const string SOLUTION_PATH_COMMAND_ID = "solution-path";
+    public const string OUTPUT_PATH_COMMAND_ID = "output";
+    public const string SOLUTION_PATH_COMMAND_ID = "solution-path";
+    public const string APP_TYPE_COMMAND_ID = "app-type";
+    public const string HELP_COMMAND_ID = "help";
 
     public CliCommand(string content, string trigger)
     {
@@ -29,6 +31,13 @@ public sealed record CliCommand
             .Any();
     }
 
+    public bool IsAppTypeCommandType
+    {
+        get => CliCommandTriggers
+            .Where(command => command.Value.Contains(Trigger) && command.Key.Equals(APP_TYPE_COMMAND_ID))
+            .Any();
+    }
+
     private void Validate()
     {
         if (IsOutputPathCommandType || IsSolutionPathCommandType)
@@ -40,8 +49,13 @@ public sealed record CliCommand
 
             if (!Directory.Exists(Content))
             {
-                throw new InvalidOperationException($"Directory '{Content}' is not a valid a path");
+                throw new InvalidOperationException(string.Format(Constants.Messages.INVALID_PATH_ERROR_MESSAGE, Content));
             }
+        }
+
+        if (Trigger is APP_TYPE_COMMAND_ID && !DefaultAppTypes.Contains(Content, StringComparer.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException(string.Format(Constants.Messages.INVALID_APP_TYPE_ERROR_MESSAGE, Content, string.Join(",", DefaultAppTypes)));
         }
     }
 
@@ -49,5 +63,24 @@ public sealed record CliCommand
     {
         { "output", new[] { "-o", "-output"} },
         { "solution-path", new[] { "--solution-path"} },
+        { "app-type", new[] { "--app-type"} },
     };
+
+    public static readonly IReadOnlyList<string> DefaultAppTypes = new List<string>()
+    {
+        "api",
+        "consumer",
+        "cronjob"
+    };
+
+    public static string GetHelpCommands()
+    {
+        StringBuilder sb = new();
+
+        sb.AppendLine($"Setting the output path to the generated files: {string.Join(" or ", CliCommandTriggers[OUTPUT_PATH_COMMAND_ID])}");
+        sb.AppendLine($"Setting the solution path which the generator will work on: {string.Join(" or ",CliCommandTriggers[SOLUTION_PATH_COMMAND_ID])}");
+        sb.AppendLine($"Setting the app type so the generator creates the right deploy files: {string.Join(" or ", CliCommandTriggers[APP_TYPE_COMMAND_ID])}");
+
+        return sb.ToString();
+    }
 }
