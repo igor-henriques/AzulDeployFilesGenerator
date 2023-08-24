@@ -15,4 +15,9 @@ public sealed record CliFileGenerateModel
 
     public string FileName { get; init; }
     public bool IsToGenerate { get; init; }
+
+    public bool RequiresDeployName()
+    {
+        return FileName is Constants.FileNames.K8sYaml or Constants.FileNames.IsaBkoYaml;
+    }
 }

@@ -8,3 +8,4 @@ global using AzulDeployFileGenerator.Domain.Models.Cli;
 global using Newtonsoft.Json.Linq;
 global using System.Collections;
 global using System.Reflection;
+global using AzulDeployFileGenerator.Domain.Attributes;

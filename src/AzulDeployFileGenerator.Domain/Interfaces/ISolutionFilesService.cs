@@ -35,4 +35,13 @@ public interface ISolutionFilesService
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
     Task GenerateAppSettingsDocker(AppSettings appSettings, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets the solution name
+    /// </summary>
+    /// <param name="relativePath"></param>
+    /// <returns></returns>
+    string GetSolutionName(string relativePath);
+
+    Task GenerateK8sDeploy(AppSettings appSettings, CancellationToken cancellationToken = default);
 }

@@ -1,15 +1,26 @@
-﻿using Console = System.Console;
+﻿using Microsoft.Extensions.Options;
+using Console = System.Console;
 
 namespace AzulDeployFileGenerator.Infrastructure.CLI;
 
 public sealed class CliService : ICliService
 {
+    private readonly IOptions<CliCommandOptions> _cliOptions;    
+
+    public CliService(IOptions<CliCommandOptions> cliOptions)
+    {
+        _cliOptions = cliOptions;
+    }
+
     private readonly List<CliFileGenerateModel> _files = new()
     {
-        new(fileName: "appsettings.Docker.json", isToGenerate: false),
-        new(fileName: "appsettings.Online.json", isToGenerate:false),
-        new(fileName: "k8sdeploy.yaml", isToGenerate:false),
-        new(fileName: "tokenizer sheet", isToGenerate:false)
+        new(fileName: Constants.FileNames.AppSettingsDocker, isToGenerate: false),
+        new(fileName: Constants.FileNames.AppSettingsOnline, isToGenerate: false),
+        new(fileName: Constants.FileNames.K8sYaml, isToGenerate: false),
+        new(fileName: Constants.FileNames.IsaBkoYaml, isToGenerate: false),
+        new(fileName: Constants.FileNames.Dockerfile, isToGenerate: false),
+        new(fileName: Constants.FileNames.DockerfileOnline, isToGenerate: false),
+        new(fileName: Constants.FileNames.DeploySheet, isToGenerate: false) // Format for getting the project name from the cli options
     };
 
     /// <summary>
@@ -45,6 +56,24 @@ public sealed class CliService : ICliService
         return _files.Where(f => f.IsToGenerate).ToList();
     }
 
+    public string GetDeployName()
+    {        
+        while (true)
+        {
+            Console.Out.WriteLine(Constants.Messages.GET_DEPLOY_NAME_MESSAGE);
+
+            var input = Console.ReadLine();
+            if (string.IsNullOrWhiteSpace(input))
+            {
+                Console.Out.WriteLine(Constants.Messages.INVALID_INPUT_ERROR_MESSAGE);
+                Console.ReadKey();
+                continue;
+            }
+
+            return input.Trim();
+        }
+    }
+
     private void PrintCurrentOptionsChoices()
     {
         Console.Out.Write('\n');
@@ -52,7 +81,7 @@ public sealed class CliService : ICliService
         for (int i = 0; i < _files.Count; i++)
         {
             var fileChoice = _files[i];
-            Console.Out.WriteLine($"{i + 1} - [{(fileChoice.IsToGenerate ? 'x' : ' ')}] {fileChoice.FileName}");
+            Console.Out.WriteLine($"{i + 1} - [{(fileChoice.IsToGenerate ? 'x' : ' ')}] {string.Format(fileChoice.FileName, _cliOptions.Value.ApplicationName)}");
         }
     }
 }

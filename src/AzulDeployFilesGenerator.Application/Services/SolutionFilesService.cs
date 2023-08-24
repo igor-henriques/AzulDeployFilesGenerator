@@ -1,14 +1,16 @@
-﻿using AzulDeployFileGenerator.Domain.Attributes;
+﻿using AzulDeployFileGenerator.Domain.Models.K8sDeploy;
+using YamlDotNet.Serialization;
+using YamlDotNet.Serialization.NamingConventions;
 
 namespace AzulDeployFilesGenerator.Application.Services;
 
 internal sealed class SolutionFilesService : ISolutionFilesService
 {
     private const string CSHARP_CLASS_EXTENSION = "*.cs";
+    private const string CSHARP_PROJECT_EXTENSION = "*.sln";
     private readonly IOptions<CliCommandOptions> _cliOptions;
 
-    public SolutionFilesService(
-        IOptions<CliCommandOptions> cliOptions)
+    public SolutionFilesService(IOptions<CliCommandOptions> cliOptions)
     {
         _cliOptions = cliOptions;
     }
@@ -31,6 +33,35 @@ internal sealed class SolutionFilesService : ISolutionFilesService
         }
 
         return await File.ReadAllTextAsync(filePath, cancellationToken);
+    }
+
+    /// <summary>
+    /// Searches for a file in a given directory and its subdirectories. 
+    /// Throws a <see cref="FileNotFoundException"/> if the file were not found.
+    /// </summary>
+    /// <param name="relativePath"></param>
+    /// <param name="fileName"></param>
+    /// <returns></returns>
+    /// <exception cref="FileNotFoundException"></exception>
+    public string GetSolutionName(string relativePath)
+    {
+        var solutionFiles = Directory.GetFiles(relativePath, CSHARP_PROJECT_EXTENSION, SearchOption.AllDirectories);
+
+        if (solutionFiles.Length > 1)
+        {
+            throw new InvalidOperationException($".sln duplicates found in the solution path provided. Fix it and try again.");
+        }
+
+        var solutionFile = solutionFiles.FirstOrDefault();
+
+        if (string.IsNullOrEmpty(solutionFile) || !File.Exists(solutionFile))
+        {
+            throw new FileNotFoundException(string.Format(Constants.Messages.FILE_NOT_FOUND_ERROR_MESSAGE, ".sln"));
+        }
+
+        FileInfo fileInfo = new(solutionFile);
+
+        return fileInfo.Name.Replace(".sln", string.Empty);
     }
 
     /// <summary>
@@ -106,7 +137,7 @@ internal sealed class SolutionFilesService : ISolutionFilesService
                 {
                     continue;
                 }
-                
+
                 if (prop.Name == nameof(AppSettings.ExtraProperties))
                 {
                     if (prop.GetValue(obj) is Dictionary<string, JToken> extraProperties)
@@ -120,7 +151,7 @@ internal sealed class SolutionFilesService : ISolutionFilesService
                     continue;
                 }
 
-                JsonPropertyAttribute jsonAttribute = prop.GetCustomAttribute<JsonPropertyAttribute>();                                     
+                JsonPropertyAttribute jsonAttribute = prop.GetCustomAttribute<JsonPropertyAttribute>();
                 string jsonPropName = jsonAttribute?.PropertyName ?? prop.Name;
                 object value = prop.GetValue(obj);
 
@@ -135,14 +166,14 @@ internal sealed class SolutionFilesService : ISolutionFilesService
 
                 if (prop.GetCustomAttribute<IgnoreDockerTokenization>() != null)
                 {
-                    result.Add(jsonPropName, JToken.FromObject(value)); 
+                    result.Add(jsonPropName, JToken.FromObject(value));
                     continue;
                 }
 
-                if (jsonPropName.Equals("id", StringComparison.OrdinalIgnoreCase) 
+                if (jsonPropName.Equals("id", StringComparison.OrdinalIgnoreCase)
                     || (jsonPropName.Equals("key", StringComparison.OrdinalIgnoreCase)))
                 {
-                    result.Add(jsonPropName, JToken.FromObject(value)); 
+                    result.Add(jsonPropName, JToken.FromObject(value));
                     path += value.ToString() + ".";
                 }
                 else if (value is string || value is ValueType)
@@ -177,5 +208,28 @@ internal sealed class SolutionFilesService : ISolutionFilesService
 
             return result;
         }
-    }    
+    }
+
+    public async Task GenerateK8sDeploy(
+        AppSettings appSettings,
+        CancellationToken cancellationToken = default)
+    {
+        var serializer = new SerializerBuilder()
+          .WithNamingConvention(CamelCaseNamingConvention.Instance)
+          .ConfigureDefaultValuesHandling(DefaultValuesHandling.OmitNull)
+          .Build();
+
+        var k8sDeploy = new KubernetesDeployment(_cliOptions);
+        
+        var namespaceYaml = serializer.Serialize(k8sDeploy.Namespace);
+        var deploymentYaml = serializer.Serialize(k8sDeploy.Deployment);
+        var hpaYaml = serializer.Serialize(k8sDeploy.HorizontalPodAutoscaler);
+
+        var combinedYaml = $"{namespaceYaml}---\n{deploymentYaml}---\n{hpaYaml}";
+
+        await File.WriteAllTextAsync(
+            Path.Combine(_cliOptions.Value.OutputPath, Constants.FileNames.K8sYaml), 
+            combinedYaml, 
+            cancellationToken);
+    }
 }

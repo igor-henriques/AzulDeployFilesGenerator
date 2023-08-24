@@ -1,6 +1,4 @@
-﻿using AzulDeployFileGenerator.Domain.Models.Cli;
-
-namespace AzulDeployFileGenerator.Domain.Interfaces;
+﻿namespace AzulDeployFileGenerator.Domain.Interfaces;
 
 public interface ICliService
 {
@@ -8,4 +6,9 @@ public interface ICliService
     /// Interacts with the user via command line input to get the files to generate.
     /// </summary>    
     List<CliFileGenerateModel> GetRequestedFilesToGenerate();
+
+    /// <summary>
+    /// Interacts with the user via command line input to get the deploy name.
+    /// </summary>    
+    string GetDeployName();
 }

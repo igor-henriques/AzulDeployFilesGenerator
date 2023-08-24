@@ -25,7 +25,7 @@ public static class ConfigureContainer
         var outputPath = commands.FirstOrDefault(command => command.IsOutputPathCommandType)?.Content;
         var appType = commands.FirstOrDefault(command => command.IsAppTypeCommandType)?.Content;
 
-        if (string.IsNullOrEmpty(solutionPath) || string.IsNullOrEmpty(outputPath))
+        if (new string?[] { solutionPath, outputPath, appType }.Any(string.IsNullOrWhiteSpace))
         {
             throw new ApplicationException(Constants.Messages.INSUFFICIENT_ARGUMENTS_ERROR_MESSAGE);
         }
