@@ -7,6 +7,7 @@ public sealed record CliCommand
     public const string APP_TYPE_COMMAND_ID = "app-type";
     public const string HELP_COMMAND_ID = "help";
     public const string DEPLOY_NAME_COMMAND_ID = "deploy-name";
+    public const string IMAGE_NAME_COMMAND_ID = "image-name";
 
     public CliCommand(string content, string trigger)
     {
@@ -46,6 +47,13 @@ public sealed record CliCommand
            .Any();
     }
 
+    public bool IsImageNameCommandType
+    {
+        get => CliCommandTriggers
+           .Where(command => command.Value.Contains(Trigger) && command.Key.Equals(IMAGE_NAME_COMMAND_ID))
+           .Any();
+    }
+
     private void Validate()
     {
         if (IsOutputPathCommandType || IsSolutionPathCommandType)
@@ -65,11 +73,6 @@ public sealed record CliCommand
         {
             throw new InvalidOperationException(string.Format(Constants.Messages.INVALID_APP_TYPE_ERROR_MESSAGE, Content, string.Join(",", DefaultAppTypes)));
         }
-
-        if (IsDeployNameCommandType && (string.IsNullOrWhiteSpace(Content) || !Content.Contains('.')))
-        {
-            throw new InvalidOperationException(string.Format(Constants.Messages.INVALID_DEPLOY_NAME_ERROR_MESSAGE, Content));
-        }
     }
 
     public static readonly IReadOnlyDictionary<string, string[]> CliCommandTriggers = new Dictionary<string, string[]>()
@@ -78,6 +81,7 @@ public sealed record CliCommand
         { "solution-path", new[] { "--solution-path", "-sp"} },
         { "app-type", new[] { "--app-type", "-at"} },
         { "deploy-name", new[] { "--deploy-name", "-dn" } },
+        { "image-name", new[] { "--image-name", "-in" } },
     };
 
     public static readonly IReadOnlyList<string> DefaultAppTypes = new List<string>()
@@ -95,7 +99,13 @@ public sealed record CliCommand
         sb.AppendLine($"[Required] Setting the solution path which the generator will work on: {string.Join(" or ", CliCommandTriggers[SOLUTION_PATH_COMMAND_ID])}");
         sb.AppendLine($"[Required] Setting the app type so the generator creates the right deploy files: {string.Join(" or ", CliCommandTriggers[APP_TYPE_COMMAND_ID])} [{string.Join("/", DefaultAppTypes)}]");
         sb.AppendLine($"[Optional] Setting the deploy name so the generator be able to create the .yaml files correctly: {string.Join(" or ", CliCommandTriggers[DEPLOY_NAME_COMMAND_ID])}");
+        sb.AppendLine($"[Optional] Setting the image name so the generator be able to create the .yaml files correctly: {string.Join(" or ", CliCommandTriggers[IMAGE_NAME_COMMAND_ID])}");
 
         return sb.ToString();
+    }
+
+    public static bool IsValidCommandTrigger(string trigger)
+    {
+        return CliCommandTriggers.Any(command => command.Value.Contains(trigger));
     }
 }

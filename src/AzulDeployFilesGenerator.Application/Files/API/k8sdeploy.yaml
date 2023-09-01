@@ -3,49 +3,28 @@ kind: Namespace
 metadata:
   name: __k8s.namespace__
 ---
-apiVersion: v1
-kind: Service
-metadata:
-  name: mnt-fli-__environment__-api-svc
-  namespace: __k8s.namespace__
-  annotations:
-    dns_zone: private
-    service.beta.kubernetes.io/azure-load-balancer-internal: "true"
-  labels:
-    app: mnt-fli-__environment__-api
-    tier: api
-    version: v1
-spec:
-  type: LoadBalancer
-  ports:
-  - name: port-ext
-    port: 80
-    targetPort: 80
-  selector:
-    app: mnt-fli-__environment__-api
-    tier: api
-    version: v1
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   namespace: __k8s.namespace__
-  name: mnt-fli-__environment__-api-dep
+  name: $deploy-name-__environment__
+  annotations:
+    apigtw: private
   labels:
-    app: mnt-fli-__environment__-api
+    app: $deploy-name-__environment__
     tier: api
     version: v1
 spec:
   selector:
     matchLabels:
-      app: mnt-fli-__environment__-api
+      app: $deploy-name-__environment__
       tier: api
       version: v1
   replicas: 1
   template:
    metadata:
     labels:
-      app: mnt-fli-__environment__-api
+      app: $deploy-name-__environment__
       tier: api
       version: v1
    spec:
@@ -59,9 +38,15 @@ spec:
       - ip: "10.0.14.70"
         hostnames:
         - "trax-api.azul.corp"
+      - ip: "10.0.6.74"
+        hostnames:
+        - "ora19odsutb01p.azul.corp"
+      - ip: "10.0.11.91"
+        hostnames:
+        - "ora19dbsh-scan"  
      containers:       
-     -  name: mnt-fli-__environment__-api
-        image: acrdevopsbr.azurecr.io/maintenance/flight/api:latest
+     -  name: $deploy-name-__environment__
+        image: $image-name
         lifecycle:
             postStart:
               exec:
@@ -70,50 +55,6 @@ spec:
                 - -c
                 - /bin/echo 'options single-request-reopen' >> /etc/resolv.conf
         env:
-          - name: log.console.enabled
-            value: '__log.console.enabled__'
-          - name: log.console.minimumLevel
-            value: '__log.console.minimumLevel__'
-          - name: log.applicationInsights.enabled
-            value: '__log.applicationInsights.enabled__'
-          - name: log.applicationInsights.minimumLevel
-            value: '__log.applicationInsights.minimumLevel__'
-          - name: log.applicationInsights.instrumentationKey
-            value: '__log.applicationInsights.instrumentationKey__'
-          - name: apiSettings.customMiddleware.exceptionHandler
-            value: '__apiSettings.customMiddleware.exceptionHandler__'
-          - name: apiSettings.customMiddleware.requestTracking
-            value: '__apiSettings.customMiddleware.requestTracking__'
-          - name: apiSettings.customMiddleware.tokenValidation
-            value: '__apiSettings.customMiddleware.tokenValidation__'
-          - name: apiSettings.customMiddleware.cultureHandler
-            value: '__apiSettings.customMiddleware.cultureHandler__'
-          - name: apiSettings.showDetailedException
-            value: '__apiSettings.showDetailedException__'
-          - name: swaggerDoc.host
-            value: '__swaggerDoc.host__'
-          - name: serviceClients.TraxServiceClient.address
-            value: '__serviceClients.TraxServiceClient.address__'
-          - name: serviceClients.TraxServiceClient.timeout
-            value: '__serviceClients.TraxServiceClient.timeout__' 
-          - name: serviceClients.TraxServiceClient.parameters.ActualFlightEndpoint
-            value: '__serviceClients.TraxServiceClient.parameters.ActualFlightEndpoint__'
-          - name: serviceClients.TraxServiceClient.parameters.FlightScheduleEndpoint
-            value: '__serviceClients.TraxServiceClient.parameters.FlightScheduleEndpoint__'
-          - name: serviceClients.TraxServiceClient.parameters.DefectMelEndpoint
-            value: '__serviceClients.TraxServiceClient.parameters.DefectMelEndpoint__'  
-          - name: serviceClients.TraxServiceClient.parameters.TechRecordsDelayEndpoint
-            value: '__serviceClients.TraxServiceClient.parameters.TechRecordsDelayEndpoint__'          
-          - name: connectionSettings.oracleId.connectionString
-            value: '__connectionSettings.oracleId.connectionString__'
-          - name: defectLidoSettings.getMelsInSql
-            value: '__defectLidoSettings.getMelsInSql__'
-          - name: defectSettings.freighterAcftIndicator
-            value: '__defectSettings.freighterAcftIndicator__'
-          - name: defectSettings.airlineDesignator
-            value: '__defectSettings.airlineDesignator__'
-          - name: defectSettings.tOPLRelevanceIndicator
-            value: '__defectSettings.tOPLRelevanceIndicator__'
         ports:
         - name: http 
           containerPort: 80
@@ -141,24 +82,28 @@ spec:
       maxUnavailable: 25%
       maxSurge: 25%
 ---
-apiVersion: autoscaling/v2beta1
+apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   namespace: __k8s.namespace__
-  name: mnt-fli-__environment__-api-hpa
+  name: $deploy-name-__environment__-hpa
 spec:
   minReplicas: __k8s.app.resources.min.replicas__
   maxReplicas: __k8s.app.resources.max.replicas__
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: mnt-fli-__environment__-api-dep
+    name: $deploy-name-__environment__
   metrics:
    - type: Resource
      resource:
         name: cpu
-        targetAverageUtilization: 80
+        target:
+          averageUtilization: 95
+          type: Utilization
    - type: Resource
      resource:
         name: memory
-        targetAverageUtilization: 80
+        target:
+          averageUtilization: 95
+          type: Utilization

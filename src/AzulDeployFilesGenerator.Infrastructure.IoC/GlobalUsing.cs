@@ -8,3 +8,4 @@ global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.Extensions.Hosting;
 global using AzulDeployFileGenerator.Domain.Models.AppSettingsObjects;
 global using AzulDeployFileGenerator.Domain.Models.Cli;
+global using AzulDeployFilesGenerator.Application.Factories;

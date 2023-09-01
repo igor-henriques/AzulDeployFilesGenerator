@@ -24,6 +24,8 @@ public static class ConfigureContainer
         var solutionPath = commands.FirstOrDefault(command => command.IsSolutionPathCommandType)?.Content;
         var outputPath = commands.FirstOrDefault(command => command.IsOutputPathCommandType)?.Content;
         var appType = commands.FirstOrDefault(command => command.IsAppTypeCommandType)?.Content;
+        var deployName = commands.FirstOrDefault(command => command.IsDeployNameCommandType)?.Content;
+        var imageName = commands.FirstOrDefault(command => command.IsImageNameCommandType)?.Content;
 
         if (new string?[] { solutionPath, outputPath, appType }.Any(string.IsNullOrWhiteSpace))
         {
@@ -34,7 +36,9 @@ public static class ConfigureContainer
         {
             options.SetSolutionPath(solutionPath)
                    .SetOutputPath(outputPath)
-                   .SetApplicationType(appType);
+                   .SetApplicationType(appType)
+                   .SetDeployName(deployName)
+                   .SetImageName(imageName);
         }));
 
         return hostBuilder;
@@ -52,5 +56,6 @@ public static class ConfigureContainer
         services.AddSingleton<ISolutionFilesService, SolutionFilesService>();
         services.AddSingleton<ICliService, CliService>();
         services.AddTransient<IValidator<AppSettings>, AppSettingsValidator>();
+        services.AddSingleton<IKubernetesDeploymentFactory, KubernetesDeploymentFactory>();
     }
 }

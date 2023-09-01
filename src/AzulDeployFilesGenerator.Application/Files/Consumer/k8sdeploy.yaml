@@ -1,0 +1,74 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+ name: __k8s.namespace__
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+ namespace: __k8s.namespace__
+ name: $deploy-name-__environment__-app-dep
+ labels:
+  app: $deploy-name-__environment__-app
+  tier: client
+  version: v1
+spec:
+ selector:
+  matchLabels:
+   app: $deploy-name-__environment__-app
+   tier: client
+   version: v1
+ replicas: 1
+ template:
+  metadata:
+   labels:
+    app: $deploy-name-__environment__-app
+    tier: client
+    version: v1
+  spec:
+   containers:
+   - name: $deploy-name-__environment__-app
+     image: $image-name
+     env: 
+     resources:
+      requests:
+       cpu: __k8s.app.resources.requests.cpu__
+       memory: __k8s.app.resources.requests.memory__
+      limits:
+       cpu: __k8s.app.resources.limits.cpu__
+       memory: __k8s.app.resources.limits.memory__
+     terminationMessagePath: /__environment__/termination-log
+     terminationMessagePolicy: File
+     imagePullPolicy: Always
+   restartPolicy: Always
+ strategy:
+  type: RollingUpdate
+  rollingUpdate:
+   maxUnavailable: 25%
+   maxSurge: 25%
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  namespace: __k8s.namespace__
+  name: $deploy-name-__environment__-app-hpa
+spec:
+  minReplicas: __k8s.app.resources.min.replicas__
+  maxReplicas: __k8s.app.resources.max.replicas__
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: $deploy-name-__environment__-app-dep
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          averageUtilization: 95
+          type: Utilization
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          averageUtilization: 95
+          type: Utilization

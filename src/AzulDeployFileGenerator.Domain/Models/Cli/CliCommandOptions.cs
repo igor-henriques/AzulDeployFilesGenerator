@@ -4,9 +4,11 @@ public sealed record CliCommandOptions
 {
     public string SolutionPath { get; private set; }
     public string OutputPath { get; private set; }
-    public string ApplicationType { get; private set; }
+    public EApplicationType ApplicationType { get; private set; }
     public string ApplicationName { get; private set; }
     public string DeployName { get; private set; }
+    public string ImageName { get; private set; }
+    public string IsaBkoImageName => ImageName.Replace(Constants.BASE_AZUL_ACR_NAME, Constants.BASE_ONLINE_ACR_NAME);
 
     public CliCommandOptions SetSolutionPath(string solutionPath)
     {
@@ -22,7 +24,12 @@ public sealed record CliCommandOptions
 
     public CliCommandOptions SetApplicationType(string applicationType)
     {
-        ApplicationType = applicationType;
+        if (!Enum.TryParse<EApplicationType>(applicationType, ignoreCase: true, out var appType))
+        {
+            throw new InvalidCastException(string.Format(Constants.Messages.INVALID_APPLICATION_TYPE_ERROR_MESSAGE, applicationType));
+        }
+
+        ApplicationType = appType;
         return this;
     }
 
@@ -34,7 +41,23 @@ public sealed record CliCommandOptions
 
     public CliCommandOptions SetDeployName(string deployName)
     {
+        if (string.IsNullOrWhiteSpace(deployName) || !deployName.Contains('-'))
+        {
+            throw new InvalidOperationException(string.Format(Constants.Messages.INVALID_DEPLOY_NAME_ERROR_MESSAGE, deployName));
+        }
+
         DeployName = deployName;
+        return this;
+    }
+
+    public CliCommandOptions SetImageName(string imageName)
+    {
+        if (!imageName.Contains(Constants.BASE_AZUL_ACR_NAME) && !imageName.Contains(Constants.BASE_ONLINE_ACR_NAME))
+        {
+            throw new InvalidOperationException(string.Format(Constants.Messages.INVALID_IMAGE_NAME_ERROR_MESSAGE, imageName));
+        }
+
+        ImageName = imageName;
         return this;
     }
 }

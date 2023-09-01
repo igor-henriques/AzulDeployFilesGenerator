@@ -7,3 +7,6 @@ global using System.Text;
 global using AzulDeployFileGenerator.Domain.Models.AppSettingsObjects;
 global using AzulDeployFileGenerator.Domain.Models.Cli;
 global using AzulDeployFileGenerator.Domain.Attributes;
+global using AzulDeployFileGenerator.Domain.Models.Enums;
+global using AzulDeployFileGenerator.Domain.Models.K8sDeploy;
+global using Newtonsoft.Json.Linq;

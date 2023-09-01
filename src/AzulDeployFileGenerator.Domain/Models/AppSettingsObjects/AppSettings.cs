@@ -1,6 +1,4 @@
-﻿using Newtonsoft.Json.Linq;
-
-namespace AzulDeployFileGenerator.Domain.Models.AppSettingsObjects;
+﻿namespace AzulDeployFileGenerator.Domain.Models.AppSettingsObjects;
 
 public sealed record AppSettings
 {
@@ -30,6 +28,12 @@ public sealed record AppSettings
 
     [JsonProperty("serviceClients", NullValueHandling = NullValueHandling.Ignore)]
     public List<ServiceClient> ServiceClients { get; init; }
+
+    [JsonProperty("resilience", NullValueHandling = NullValueHandling.Ignore)]
+    public Resilience Resilience { get; init; }
+
+    [JsonProperty("eventCustomSettings", NullValueHandling = NullValueHandling.Ignore)]
+    public EventCustomSettings EventCustomSettings { get; init; }
 
     [JsonExtensionData]    
     public Dictionary<string, JToken> ExtraProperties { get; init; } = new Dictionary<string, JToken>();

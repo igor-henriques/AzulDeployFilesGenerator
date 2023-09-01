@@ -11,4 +11,9 @@ public interface ICliService
     /// Interacts with the user via command line input to get the deploy name.
     /// </summary>    
     string GetDeployName();
+
+    /// <summary>
+    /// Interacts with the user via command line input to get the image name.
+    /// </summary>    
+    string GetImageName();
 }

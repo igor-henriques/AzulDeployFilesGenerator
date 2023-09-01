@@ -44,6 +44,12 @@ internal sealed class FileGeneratorOrchestrator : IOrchestrator
 
         var requestedFiles = _cliService.GetRequestedFilesToGenerate();
 
+        if (!requestedFiles.Any())
+        {
+            _logger.LogInformation(Constants.Messages.NO_ACTIONS_MESSAGE);
+            Environment.Exit(0);
+        }
+
         foreach (var fileToGenerate in requestedFiles)
         {
             try
@@ -51,13 +57,15 @@ internal sealed class FileGeneratorOrchestrator : IOrchestrator
                 if (fileToGenerate.RequiresDeployName() && string.IsNullOrWhiteSpace(_cliOptions.Value.DeployName))
                 {
                     _cliOptions.Value.SetDeployName(_cliService.GetDeployName());
+                    _cliOptions.Value.SetImageName(_cliService.GetImageName());
                 }
 
                 var task = fileToGenerate.FileName switch
                 {
                     Constants.FileNames.AppSettingsOnline => _solutionFilesService.GenerateAppSettingsOnline(appsettingsObj, cancellationToken),
                     Constants.FileNames.AppSettingsDocker => _solutionFilesService.GenerateAppSettingsDocker(appsettingsObj, cancellationToken),
-                    Constants.FileNames.K8sYaml => _solutionFilesService.GenerateK8sDeploy(appsettingsObj, cancellationToken),
+                    Constants.FileNames.K8sYaml => _solutionFilesService.GenerateAzulK8sDeploy(appsettingsObj, cancellationToken),
+                    Constants.FileNames.IsaBkoYaml => _solutionFilesService.GenerateOnlineK8sDeploy(appsettingsObj, cancellationToken),
                     _ => throw new NotImplementedException("Feature not implemented yet.")
                 };
 
@@ -65,18 +73,13 @@ internal sealed class FileGeneratorOrchestrator : IOrchestrator
             }
             catch (Exception ex)
             {
-                if (requestedFiles.Count > 1)
-                {
-                    _logger.LogError("Error generating {fileName}. Exception: {exception}\nMoving to the next.", 
+                var errorMessage = requestedFiles.Count > 1
+                    ? "Error generating {fileName}. Exception: {exception}\nMoving to the next."
+                    : "Error generating {fileName}. Exception: {exception}\nNo more files to generate.";
+
+                _logger.LogError(errorMessage,
                         fileToGenerate.FileName,
                         ex);
-                }
-                else
-                {
-                    _logger.LogError("Error generating {fileName}. Exception: {exception}\nNo more files to generate.",
-                        fileToGenerate.FileName,
-                        ex);
-                }
 
                 continue;
             }

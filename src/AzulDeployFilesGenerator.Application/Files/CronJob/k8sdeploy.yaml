@@ -1,0 +1,43 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: __k8s.namespace__
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  namespace: __k8s.namespace__
+  name: $deploy-name-__environment__-app-crn
+  labels:
+    app: $deploy-name-__environment__-app
+    tier: job
+    version: v1
+spec:
+  schedule: '__k8s.schedule__'
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 10
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: $deploy-name-__environment__-app
+            tier: job
+            version: v1
+        spec:
+          containers:
+            - name: $deploy-name-__environment__-app
+              image: $image-name
+              env:
+              resources:
+                requests:
+                  cpu: __k8s.app.resources.requests.cpu__
+                  memory: __k8s.app.resources.requests.memory__
+                limits:
+                  cpu: __k8s.app.resources.limits.cpu__
+                  memory: __k8s.app.resources.limits.memory__
+              terminationMessagePath: /__environment__/termination-log
+              terminationMessagePolicy: File
+              imagePullPolicy: Always
+          restartPolicy: OnFailure

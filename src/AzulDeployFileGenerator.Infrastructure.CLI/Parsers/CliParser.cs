@@ -12,9 +12,9 @@ public static class CliParser
 
         if (!args.Any(a =>
         {
-            return a.Replace("-", string.Empty) is CliCommand.OUTPUT_PATH_COMMAND_ID 
-                     or CliCommand.SOLUTION_PATH_COMMAND_ID 
-                     or CliCommand.APP_TYPE_COMMAND_ID;
+            return CliCommand.CliCommandTriggers[CliCommand.OUTPUT_PATH_COMMAND_ID].Contains(a) 
+            || CliCommand.CliCommandTriggers[CliCommand.SOLUTION_PATH_COMMAND_ID].Contains(a) 
+            || CliCommand.CliCommandTriggers[CliCommand.APP_TYPE_COMMAND_ID].Contains(a);
         }))
         {
             throw new ApplicationException(Constants.Messages.INSUFFICIENT_ARGUMENTS_ERROR_MESSAGE);

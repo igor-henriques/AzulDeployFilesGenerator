@@ -43,5 +43,6 @@ public interface ISolutionFilesService
     /// <returns></returns>
     string GetSolutionName(string relativePath);
 
-    Task GenerateK8sDeploy(AppSettings appSettings, CancellationToken cancellationToken = default);
+    Task GenerateAzulK8sDeploy(AppSettings appSettings, CancellationToken cancellationToken = default);
+    Task GenerateOnlineK8sDeploy(AppSettings appSettings, CancellationToken cancellationToken = default);
 }

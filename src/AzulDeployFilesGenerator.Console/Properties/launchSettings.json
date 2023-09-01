@@ -2,7 +2,7 @@
   "profiles": {
     "AzulDeployFilesGenerator.Console": {
       "commandName": "Project",
-      "commandLineArgs": "--app-type api -output . --solution-path C:\\Users\\User\\source\\repos\\FlightApiAzul"
+      "commandLineArgs": "-o . -sp C:\\Users\\User\\source\\repos\\Maintenance.Trax.SabreIntegrator.Consumer -at consumer -dn mnt-sabre-csm -in acrdevopsbr.azurecr.io/maintenance/trax/sabre-prod-csm:latest"
     }
   }
 }

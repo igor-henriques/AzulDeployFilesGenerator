@@ -8,17 +8,33 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Files\API\Base.Api.Sheet.xlsx" />
+    <None Remove="Files\API\isabkodeploy.yaml" />
+    <None Remove="Files\API\k8sdeploy.yaml" />
+    <None Remove="Files\Consumer\isabkodeploy.yaml" />
+    <None Remove="Files\Consumer\k8sdeploy.yaml" />
+    <None Remove="Files\CronJob\isabkodeploy.yaml" />
+    <None Remove="Files\CronJob\k8sdeploy.yaml" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="Files\API\Base.Api.Sheet.xlsx">
+    <Content Include="Files\API\isabkodeploy.yaml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Files\DefaultConsoleApplication\" />
+    <Content Include="Files\API\k8sdeploy.yaml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Files\Consumer\isabkodeploy.yaml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Files\Consumer\k8sdeploy.yaml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Files\CronJob\isabkodeploy.yaml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Files\CronJob\k8sdeploy.yaml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>

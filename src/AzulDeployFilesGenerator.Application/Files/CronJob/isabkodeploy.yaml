@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: deploy-generator
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  namespace: deploy-generator
+  name: $deploy-name-tst-app-crn
+  labels:
+    app: $deploy-name-tst-app
+    tier: job
+    version: v1
+spec:
+  schedule: '*/1 * * * *'
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 10
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: $deploy-name-tst-app
+            tier: job
+            version: v1
+        spec:
+          containers:
+            - name: $deploy-name-tst-app
+              image: $image-name
+              env:
+              terminationMessagePath: /tst/termination-log
+              terminationMessagePolicy: File
+              imagePullPolicy: Always
+          restartPolicy: OnFailure

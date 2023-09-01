@@ -14,7 +14,13 @@ public sealed record CliFileGenerateModel
     }
 
     public string FileName { get; init; }
-    public bool IsToGenerate { get; init; }
+    public bool IsToGenerate { get; private set; }
+
+    public CliFileGenerateModel SetIsToGenerate(bool isToGenerate)
+    {
+        IsToGenerate = isToGenerate;
+        return this;
+    }
 
     public bool RequiresDeployName()
     {

@@ -5,7 +5,7 @@ namespace AzulDeployFileGenerator.Infrastructure.CLI;
 
 public sealed class CliService : ICliService
 {
-    private readonly IOptions<CliCommandOptions> _cliOptions;    
+    private readonly IOptions<CliCommandOptions> _cliOptions;
 
     public CliService(IOptions<CliCommandOptions> cliOptions)
     {
@@ -43,6 +43,7 @@ public sealed class CliService : ICliService
             if (int.TryParse(input, out int index) && index > 0 && index <= _files.Count)
             {
                 _files[index - 1] = new(_files[index - 1].FileName, !_files[index - 1].IsToGenerate);
+                EnsureK8sDeploysGeneratedTogether(index);
             }
             else
             {
@@ -56,11 +57,58 @@ public sealed class CliService : ICliService
         return _files.Where(f => f.IsToGenerate).ToList();
     }
 
+    /// <summary>
+    /// To generate Azul K8s Yaml, we need the ImageName provided
+    /// To generate IsaBko Yaml, we get the image name based on the ImageName provided
+    /// Therefore, here we ensure IsaBkoYaml is only generated together with K8sYaml
+    /// </summary>
+    /// <param name="index"></param>
+    private void EnsureK8sDeploysGeneratedTogether(int index)
+    {
+        if (_files[index - 1].FileName is Constants.FileNames.IsaBkoYaml)
+        {
+            var file = _files[_files.IndexOf(_files.Where(f => f.FileName is Constants.FileNames.K8sYaml).First())];
+
+            if (!file.IsToGenerate && _files[index - 1].IsToGenerate)
+            {
+                file.SetIsToGenerate(_files[index - 1].IsToGenerate);
+            }
+        }
+
+        if (_files[index - 1].FileName is Constants.FileNames.K8sYaml)
+        {
+            var file = _files[_files.IndexOf(_files.Where(f => f.FileName is Constants.FileNames.IsaBkoYaml).First())];
+
+            if (file.IsToGenerate && !_files[index - 1].IsToGenerate)
+            {
+                file.SetIsToGenerate(_files[index - 1].IsToGenerate);
+            }
+        }
+    }
+
     public string GetDeployName()
-    {        
+    {
         while (true)
         {
             Console.Out.WriteLine(Constants.Messages.GET_DEPLOY_NAME_MESSAGE);
+
+            var input = Console.ReadLine();
+            if (string.IsNullOrWhiteSpace(input))
+            {
+                Console.Out.WriteLine(Constants.Messages.INVALID_INPUT_ERROR_MESSAGE);
+                Console.ReadKey();
+                continue;
+            }
+
+            return input.Trim();
+        }
+    }
+
+    public string GetImageName()
+    {
+        while (true)
+        {
+            Console.Out.WriteLine(Constants.Messages.GET_IMAGE_NAME_MESSAGE);
 
             var input = Console.ReadLine();
             if (string.IsNullOrWhiteSpace(input))
@@ -81,6 +129,7 @@ public sealed class CliService : ICliService
         for (int i = 0; i < _files.Count; i++)
         {
             var fileChoice = _files[i];
+
             Console.Out.WriteLine($"{i + 1} - [{(fileChoice.IsToGenerate ? 'x' : ' ')}] {string.Format(fileChoice.FileName, _cliOptions.Value.ApplicationName)}");
         }
     }

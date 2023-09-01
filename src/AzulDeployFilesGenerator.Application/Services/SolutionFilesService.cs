@@ -1,4 +1,5 @@
 ﻿using AzulDeployFileGenerator.Domain.Models.K8sDeploy;
+using System.Text;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
@@ -9,10 +10,14 @@ internal sealed class SolutionFilesService : ISolutionFilesService
     private const string CSHARP_CLASS_EXTENSION = "*.cs";
     private const string CSHARP_PROJECT_EXTENSION = "*.sln";
     private readonly IOptions<CliCommandOptions> _cliOptions;
+    private readonly IKubernetesDeploymentFactory _k8sDeployFactory;
 
-    public SolutionFilesService(IOptions<CliCommandOptions> cliOptions)
+    public SolutionFilesService(
+        IOptions<CliCommandOptions> cliOptions,
+        IKubernetesDeploymentFactory k8sDeployFactory)
     {
         _cliOptions = cliOptions;
+        _k8sDeployFactory = k8sDeployFactory;
     }
 
     /// <summary>
@@ -142,10 +147,8 @@ internal sealed class SolutionFilesService : ISolutionFilesService
                 {
                     if (prop.GetValue(obj) is Dictionary<string, JToken> extraProperties)
                     {
-                        foreach (var item in extraProperties)
-                        {
-                            result.Add(item.Key, item.Value);
-                        }
+                        var tokenizedExtraProperties = TokenizeFromExtraProperties(extraProperties);
+                        result.Merge(tokenizedExtraProperties);
                     }
 
                     continue;
@@ -208,28 +211,54 @@ internal sealed class SolutionFilesService : ISolutionFilesService
 
             return result;
         }
+
+        static JObject TokenizeFromExtraProperties(Dictionary<string, JToken> properties, string parentKey = "")
+        {
+            JObject result = new();
+
+            foreach (var item in properties)
+            {
+                string key = string.IsNullOrEmpty(parentKey) ? item.Key : parentKey + "." + item.Key;
+
+                if (item.Value is JObject childObject)
+                {
+                    // Chamada recursiva para lidar com objetos aninhados
+                    JObject childResult = TokenizeFromExtraProperties(childObject.ToObject<Dictionary<string, JToken>>(), key);
+                    result.Add(item.Key, childResult); // Adiciona o objeto filho ao pai
+                }
+                else
+                {
+                    result.Add(item.Key, "${" + key + "}");
+                }
+            }
+
+            return result;
+        }
+
+
     }
 
-    public async Task GenerateK8sDeploy(
+    public async Task GenerateAzulK8sDeploy(
+        AppSettings appSettings,
+        CancellationToken cancellationToken = default)
+    {        
+        var k8sDeploy = await _k8sDeployFactory.BuildAzulKubernetesDeployment(appSettings, cancellationToken);
+
+        await File.WriteAllTextAsync(
+            Path.Combine(_cliOptions.Value.OutputPath, Constants.FileNames.K8sYaml),
+            k8sDeploy,
+            cancellationToken);
+    }
+
+    public async Task GenerateOnlineK8sDeploy(
         AppSettings appSettings,
         CancellationToken cancellationToken = default)
     {
-        var serializer = new SerializerBuilder()
-          .WithNamingConvention(CamelCaseNamingConvention.Instance)
-          .ConfigureDefaultValuesHandling(DefaultValuesHandling.OmitNull)
-          .Build();
-
-        var k8sDeploy = new KubernetesDeployment(_cliOptions);
-        
-        var namespaceYaml = serializer.Serialize(k8sDeploy.Namespace);
-        var deploymentYaml = serializer.Serialize(k8sDeploy.Deployment);
-        var hpaYaml = serializer.Serialize(k8sDeploy.HorizontalPodAutoscaler);
-
-        var combinedYaml = $"{namespaceYaml}---\n{deploymentYaml}---\n{hpaYaml}";
+        var isabkoDeploy = await _k8sDeployFactory.BuildOnlineKubernetesDeployment(appSettings, cancellationToken);
 
         await File.WriteAllTextAsync(
-            Path.Combine(_cliOptions.Value.OutputPath, Constants.FileNames.K8sYaml), 
-            combinedYaml, 
+            Path.Combine(_cliOptions.Value.OutputPath, Constants.FileNames.IsaBkoYaml),
+            isabkoDeploy.ToString(),
             cancellationToken);
     }
 }

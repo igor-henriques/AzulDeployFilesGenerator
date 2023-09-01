@@ -82,6 +82,11 @@ public sealed class AppSettingsValidator : IValidator<AppSettings>
 
     private async Task ValidateServiceClients(List<ServiceClient> serviceClients, CancellationToken cancellationToken = default)
     {
+        if (serviceClients is null || serviceClients?.Count is 0)
+        {
+            return;
+        }
+
         var distinctServicesClients = serviceClients.DistinctBy(s => s.Id);
         var hasDistinctIds = distinctServicesClients.Count() == serviceClients.Count;
 
