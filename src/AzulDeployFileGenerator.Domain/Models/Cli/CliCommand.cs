@@ -79,7 +79,7 @@ public sealed record CliCommand
     {
         { "output", new[] { "-output", "-o" } },
         { "solution-path", new[] { "--solution-path", "-sp"} },
-        { "app-type", new[] { "--app-type", "-at"} },
+        { "app-type", new[] { "--app-type", "--application-type", "-at"} },
         { "deploy-name", new[] { "--deploy-name", "-dn" } },
         { "image-name", new[] { "--image-name", "-in" } },
     };
