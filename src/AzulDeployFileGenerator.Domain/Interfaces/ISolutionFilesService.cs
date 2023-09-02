@@ -6,43 +6,62 @@ public interface ISolutionFilesService
     /// Searches for a file in a given directory and its subdirectories recursively. 
     /// Throws a <see cref="FileNotFoundException"/> if the file were not found.
     /// </summary>
-    /// <param name="relativePath"></param>
+    /// <param name="relativePath">Defaults to CliCommandOptions.SolutionPath</param>
     /// <param name="fileName"></param>
     /// <returns></returns>
     /// <exception cref="FileNotFoundException"></exception>
-    ValueTask<string> GetFileContent(string relativePath, string fileName, CancellationToken cancellationToken = default);
+    ValueTask<string> GetFileContentAsync(string fileName, string relativePath = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Search for a specific string content in all C# classes (.cs) in a given directory and its subdirectories.
     /// </summary>
-    /// <param name="relativePath"></param>
-    /// <param name="content"></param>
+    /// <param name="relativePath">Defaults to CliCommandOptions.SolutionPath</param>
+    /// <param name="text"></param>
     /// <returns></returns>
-    Task<bool> AnySolutionClassContainsText(string relativePath, string content, CancellationToken cancellationToken = default);
+    Task<bool> ContainsTextInAnyCSharpFileAsync(string text, string relativePath = null, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Generates the appsettings.json file for the online environment.
-    /// </summary>
-    /// <param name="appSettings"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
-    Task GenerateAppSettingsOnline(AppSettings appSettings, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Generates a tokenized version of the appsettings, stands for appsettings.Docker.json
-    /// </summary>
-    /// <param name="appSettings"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
-    Task GenerateAppSettingsDocker(AppSettings appSettings, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Gets the solution name
+    /// Searches for a file *.sln in a given directory and its subdirectories. 
     /// </summary>
     /// <param name="relativePath"></param>
+    /// <param name="fileName"></param>
     /// <returns></returns>
-    string GetSolutionName(string relativePath);
+    /// <exception cref="FileNotFoundException">Throws if the *.sln file were not found</exception>
+    /// <exception cref="InvalidOperationException">Throws if there's *.sln duplicates</exception>
+    string GetSolutionName(string relativePath = null);
 
-    Task GenerateAzulK8sDeploy(AppSettings appSettings, CancellationToken cancellationToken = default);
-    Task GenerateOnlineK8sDeploy(AppSettings appSettings, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Executes 'dotnet clean' command over the solution to remove all unnecessary files.
+    /// <param name="relativePath">Defaults to CliCommandOptions.SolutionPath</param>
+    /// </summary>
+    void CleanSolutionFiles(string relativePath = null);
+
+    /// <summary>
+    /// Searches all directories for the pattern *.cer files
+    /// </summary>
+    /// <param name="sslPath">List of *.cer files fullnames</param>
+    /// <param name="relativePath">Defaults to CliCommandOptions.SolutionPath</param>
+    /// <returns>true if any certificates were found</returns>
+    bool FindAnySslCertificates(out List<string> sslPath, string relativePath = null);
+
+    /// <summary>
+    /// Validates if the Nuget.Config file exists in the solution path
+    /// </summary>
+    /// <param name="relativePath">Defaults to CliCommandOptions.SolutionPath</param>
+    void ValidateNugetConfig(string relativePath = null);
+
+    /// <summary>
+    /// Searches for the entrypoint assembly. When this method finds the Program.cs class, it'll return the relative assembly name, along with its parent directory.
+    /// </summary>
+    /// <param name="relativePath">Defaults to CliCommandOptions.SolutionPath</param>
+    /// <param name="cancellationToken"></param>    
+    /// <returns>Parent Directory, *.csproj Name</returns>
+    Task<(string, string)> FindEntrypointAssemblyAsync(string relativePath = null, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Searches for all *.csproj files in a given directory and its subdirectories.
+    /// </summary>
+    /// <param name="relativePath">Defaults to CliCommandOptions.SolutionPath</param>
+    /// <returns></returns>
+    string[] FindAllCsprojFiles(string relativePath = null);
 }

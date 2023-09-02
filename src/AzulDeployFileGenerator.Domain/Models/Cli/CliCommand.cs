@@ -14,62 +14,62 @@ public sealed record CliCommand
         Content = content;
         Trigger = trigger;
 
+        if (Content is ".")
+        {
+            Content = Directory.GetCurrentDirectory();
+        }
+
         Validate();
     }
 
     public string Content { get; private set; }
     public string Trigger { get; init; }
-    public bool IsOutputPathCommandType
+    public static bool IsOutputPathCommandType(string trigger)
     {
-        get => CliCommandTriggers
-            .Where(command => command.Value.Contains(Trigger) && command.Key.Equals(OUTPUT_PATH_COMMAND_ID))
+        return CliCommandTriggers
+            .Where(command => command.Value.Contains(trigger) && command.Key.Equals(OUTPUT_PATH_COMMAND_ID))
             .Any();
     }
 
-    public bool IsSolutionPathCommandType
+    public static bool IsSolutionPathCommandType(string trigger)
     {
-        get => CliCommandTriggers
-            .Where(command => command.Value.Contains(Trigger) && command.Key.Equals(SOLUTION_PATH_COMMAND_ID))
+        return CliCommandTriggers
+            .Where(command => command.Value.Contains(trigger) && command.Key.Equals(SOLUTION_PATH_COMMAND_ID))
             .Any();
     }
 
-    public bool IsAppTypeCommandType
+    public static bool IsAppTypeCommandType(string trigger)
     {
-        get => CliCommandTriggers
-            .Where(command => command.Value.Contains(Trigger) && command.Key.Equals(APP_TYPE_COMMAND_ID))
+        return CliCommandTriggers
+            .Where(command => command.Value.Contains(trigger) && command.Key.Equals(APP_TYPE_COMMAND_ID))
             .Any();
     }
 
-    public bool IsDeployNameCommandType
+    public static bool IsDeployNameCommandType(string trigger)
     {
-        get => CliCommandTriggers
-           .Where(command => command.Value.Contains(Trigger) && command.Key.Equals(DEPLOY_NAME_COMMAND_ID))
+        return CliCommandTriggers
+           .Where(command => command.Value.Contains(trigger) && command.Key.Equals(DEPLOY_NAME_COMMAND_ID))
            .Any();
     }
 
-    public bool IsImageNameCommandType
+    public static bool IsImageNameCommandType(string trigger)
     {
-        get => CliCommandTriggers
-           .Where(command => command.Value.Contains(Trigger) && command.Key.Equals(IMAGE_NAME_COMMAND_ID))
+        return CliCommandTriggers
+           .Where(command => command.Value.Contains(trigger) && command.Key.Equals(IMAGE_NAME_COMMAND_ID))
            .Any();
     }
 
     private void Validate()
     {
-        if (IsOutputPathCommandType || IsSolutionPathCommandType)
-        {
-            if (Content is ".")
-            {
-                Content = Directory.GetCurrentDirectory();
-            }
-
+        if (IsOutputPathCommandType(Trigger) || IsSolutionPathCommandType(Trigger))
+        {            
             if (!Directory.Exists(Content))
             {
                 throw new InvalidOperationException(string.Format(Constants.Messages.INVALID_PATH_ERROR_MESSAGE, Content));
             }
         }
 
-        if (IsAppTypeCommandType && !DefaultAppTypes.Contains(Content, StringComparer.OrdinalIgnoreCase))
+        if (IsAppTypeCommandType(Trigger) && !DefaultAppTypes.Contains(Content, StringComparer.OrdinalIgnoreCase))
         {
             throw new InvalidOperationException(string.Format(Constants.Messages.INVALID_APP_TYPE_ERROR_MESSAGE, Content, string.Join(",", DefaultAppTypes)));
         }
@@ -93,15 +93,15 @@ public sealed record CliCommand
 
     public static string GetHelpCommands()
     {
-        StringBuilder sb = new();
+        StringBuilder builder = new();
 
-        sb.AppendLine($"[Required] Setting the output path to the generated files: {string.Join(" or ", CliCommandTriggers[OUTPUT_PATH_COMMAND_ID])}");
-        sb.AppendLine($"[Required] Setting the solution path which the generator will work on: {string.Join(" or ", CliCommandTriggers[SOLUTION_PATH_COMMAND_ID])}");
-        sb.AppendLine($"[Required] Setting the app type so the generator creates the right deploy files: {string.Join(" or ", CliCommandTriggers[APP_TYPE_COMMAND_ID])} [{string.Join("/", DefaultAppTypes)}]");
-        sb.AppendLine($"[Optional] Setting the deploy name so the generator be able to create the .yaml files correctly: {string.Join(" or ", CliCommandTriggers[DEPLOY_NAME_COMMAND_ID])}");
-        sb.AppendLine($"[Optional] Setting the image name so the generator be able to create the .yaml files correctly: {string.Join(" or ", CliCommandTriggers[IMAGE_NAME_COMMAND_ID])}");
+        builder.AppendLine($"[Required] Setting the output path to the generated files: {string.Join(" or ", CliCommandTriggers[OUTPUT_PATH_COMMAND_ID])}");
+        builder.AppendLine($"[Required] Setting the solution path which the generator will work on: {string.Join(" or ", CliCommandTriggers[SOLUTION_PATH_COMMAND_ID])}");
+        builder.AppendLine($"[Required] Setting the app type so the generator creates the right deploy files: {string.Join(" or ", CliCommandTriggers[APP_TYPE_COMMAND_ID])} [{string.Join("/", DefaultAppTypes)}]");
+        builder.AppendLine($"[Optional] Setting the deploy name so the generator be able to create the .yaml files correctly: {string.Join(" or ", CliCommandTriggers[DEPLOY_NAME_COMMAND_ID])}");
+        builder.AppendLine($"[Optional] Setting the image name so the generator be able to create the .yaml files correctly: {string.Join(" or ", CliCommandTriggers[IMAGE_NAME_COMMAND_ID])}");
 
-        return sb.ToString();
+        return builder.ToString();
     }
 
     public static bool IsValidCommandTrigger(string trigger)

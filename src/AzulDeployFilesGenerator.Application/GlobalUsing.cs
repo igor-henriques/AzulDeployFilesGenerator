@@ -15,3 +15,7 @@ global using YamlDotNet.Serialization.NamingConventions;
 global using YamlDotNet.Serialization;
 global using AzulDeployFileGenerator.Domain.Models.Enums;
 global using YamlDotNet.RepresentationModel;
+global using System.Diagnostics;
+global using OfficeOpenXml;
+global using System.Drawing;
+global using OfficeOpenXml.Style;

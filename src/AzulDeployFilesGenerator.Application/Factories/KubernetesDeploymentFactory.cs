@@ -107,7 +107,7 @@ internal sealed class KubernetesDeploymentFactory : IKubernetesDeploymentFactory
         return string.Join("\n", indentedLines);
     }
 
-    private bool ValidateYaml(string originalYaml)
+    private static bool ValidateYaml(string originalYaml)
     {
         try
         {

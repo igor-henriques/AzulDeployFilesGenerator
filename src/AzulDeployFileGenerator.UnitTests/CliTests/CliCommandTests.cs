@@ -18,7 +18,7 @@ public sealed class CliCommandTests
         var command = new CliCommand(content, trigger);
 
         // Act
-        var result = command.IsOutputPathCommandType;
+        var result = CliCommand.IsOutputPathCommandType(command.Trigger);
 
         // Assert
         Assert.Equal(expected, result);
@@ -45,7 +45,7 @@ public sealed class CliCommandTests
         var command = new CliCommand(content, trigger);
 
         // Act
-        var result = command.IsSolutionPathCommandType;
+        var result = CliCommand.IsSolutionPathCommandType(command.Trigger);
 
         // Assert
         Assert.Equal(expected, result);

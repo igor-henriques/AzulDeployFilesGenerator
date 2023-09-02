@@ -7,6 +7,7 @@ internal sealed class FileGeneratorOrchestrator : IOrchestrator
 {
     private readonly IOptions<CliCommandOptions> _cliOptions;
     private readonly ISolutionFilesService _solutionFilesService;
+    private readonly IDeployFileGeneratorService _deployFileGeneratorService;
     private readonly ILogger<FileGeneratorOrchestrator> _logger;
     private readonly IValidator<AppSettings> _appSettingsValidator;
     private readonly ICliService _cliService;
@@ -16,31 +17,38 @@ internal sealed class FileGeneratorOrchestrator : IOrchestrator
         ISolutionFilesService solutionFilesService,
         ILogger<FileGeneratorOrchestrator> logger,
         IValidator<AppSettings> appSettingsValidator,
-        ICliService cliService)
+        ICliService cliService,
+        IDeployFileGeneratorService deployFileGeneratorService)
     {
         _cliOptions = cliOptions;
         _solutionFilesService = solutionFilesService;
         _logger = logger;
         _appSettingsValidator = appSettingsValidator;
         _cliService = cliService;
+        _deployFileGeneratorService = deployFileGeneratorService;
     }
 
     public async Task OrchestrateAsync(CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("Searching for {fileName}", Constants.FileNames.AppSettings);
+        _logger.LogInformation(Constants.Messages.EXECUTING_DOTNET_CLEAN_MESSAGE);
 
-        var appsettingsString = await _solutionFilesService.GetFileContent(
-            _cliOptions.Value.SolutionPath,
+        _solutionFilesService.CleanSolutionFiles();
+
+        _logger.LogInformation(Constants.Messages.SOLUTION_CLEANED);
+
+        _logger.LogInformation("Searching for {fileName}\n", Constants.FileNames.AppSettings);
+
+        var appsettingsString = await _solutionFilesService.GetFileContentAsync(
             Constants.FileNames.AppSettings,
-            cancellationToken);
+            cancellationToken: cancellationToken);
 
-        _logger.LogInformation("{fileName} found", Constants.FileNames.AppSettings);
+        _logger.LogInformation("{fileName} found\n", Constants.FileNames.AppSettings);
         
         var appsettingsObj = JsonConvert.DeserializeObject<AppSettings>(appsettingsString);
         await _appSettingsValidator.ValidateAndThrowAsync(appsettingsObj, cancellationToken);
 
         _cliOptions.Value.SetApplicationName(
-            _solutionFilesService.GetSolutionName(_cliOptions.Value.SolutionPath));
+            _solutionFilesService.GetSolutionName());
 
         var requestedFiles = _cliService.GetRequestedFilesToGenerate();
 
@@ -60,13 +68,16 @@ internal sealed class FileGeneratorOrchestrator : IOrchestrator
                     _cliOptions.Value.SetImageName(_cliService.GetImageName());
                 }
 
-                var task = fileToGenerate.FileName switch
+                var task = string.Format(fileToGenerate.FileName, _cliOptions.Value.ApplicationName) switch
                 {
-                    Constants.FileNames.AppSettingsOnline => _solutionFilesService.GenerateAppSettingsOnline(appsettingsObj, cancellationToken),
-                    Constants.FileNames.AppSettingsDocker => _solutionFilesService.GenerateAppSettingsDocker(appsettingsObj, cancellationToken),
-                    Constants.FileNames.K8sYaml => _solutionFilesService.GenerateAzulK8sDeploy(appsettingsObj, cancellationToken),
-                    Constants.FileNames.IsaBkoYaml => _solutionFilesService.GenerateOnlineK8sDeploy(appsettingsObj, cancellationToken),
-                    _ => throw new NotImplementedException("Feature not implemented yet.")
+                    Constants.FileNames.AppSettingsOnline => _deployFileGeneratorService.GenerateAppSettingsOnline(appsettingsObj, cancellationToken),
+                    Constants.FileNames.AppSettingsDocker => _deployFileGeneratorService.GenerateAppSettingsDocker(appsettingsObj, cancellationToken),
+                    Constants.FileNames.K8sYaml => _deployFileGeneratorService.GenerateAzulK8sDeploy(appsettingsObj, cancellationToken),
+                    Constants.FileNames.IsaBkoYaml => _deployFileGeneratorService.GenerateOnlineK8sDeploy(appsettingsObj, cancellationToken),
+                    Constants.FileNames.Dockerfile => _deployFileGeneratorService.GenerateAzulDockerfile(cancellationToken),
+                    Constants.FileNames.DockerfileOnline => _deployFileGeneratorService.GenerateOnlineDockerfile(cancellationToken),
+                    var fileName when fileName == string.Format(Constants.FileNames.DeploySheet, _cliOptions.Value.ApplicationName) => _deployFileGeneratorService.GenerateTokenizationExcelSheet(appsettingsObj, cancellationToken),
+                    _ => throw new ApplicationException(string.Format(Constants.Messages.INVALID_FILE_NAME_ERROR_MESSAGE, fileToGenerate.FileName))
                 };
 
                 await task;
@@ -81,11 +92,12 @@ internal sealed class FileGeneratorOrchestrator : IOrchestrator
                         fileToGenerate.FileName,
                         ex);
 
+                //If we had an exception generating some file, we want to continue so we don't have a success log.
                 continue;
             }
 
-            _logger.LogInformation("{fileName} successfully generated at {outputPath}", 
-                fileToGenerate.FileName,
+            _logger.LogInformation("'{fileName}' successfully generated at {outputPath}\n\n", 
+                string.Format(fileToGenerate.FileName, _cliOptions.Value.ApplicationName),
                 _cliOptions.Value.OutputPath);
         }
     }

@@ -8,7 +8,7 @@ public sealed record CliCommandOptions
     public string ApplicationName { get; private set; }
     public string DeployName { get; private set; }
     public string ImageName { get; private set; }
-    public string IsaBkoImageName => ImageName.Replace(Constants.BASE_AZUL_ACR_NAME, Constants.BASE_ONLINE_ACR_NAME);
+    public string IsaBkoImageName => ImageName.Replace(Constants.ImageNames.BASE_AZUL_ACR_NAME, Constants.ImageNames.BASE_ONLINE_ACR_NAME);
 
     public CliCommandOptions SetSolutionPath(string solutionPath)
     {
@@ -52,7 +52,7 @@ public sealed record CliCommandOptions
 
     public CliCommandOptions SetImageName(string imageName)
     {
-        if (!imageName.Contains(Constants.BASE_AZUL_ACR_NAME) && !imageName.Contains(Constants.BASE_ONLINE_ACR_NAME))
+        if (!imageName.Contains(Constants.ImageNames.BASE_AZUL_ACR_NAME) && !imageName.Contains(Constants.ImageNames.BASE_ONLINE_ACR_NAME))
         {
             throw new InvalidOperationException(string.Format(Constants.Messages.INVALID_IMAGE_NAME_ERROR_MESSAGE, imageName));
         }

@@ -1,9 +1,9 @@
-﻿using Microsoft.Extensions.Options;
+﻿using System.Text;
 using Console = System.Console;
 
 namespace AzulDeployFileGenerator.Infrastructure.CLI;
 
-public sealed class CliService : ICliService
+internal sealed class CliService : ICliService
 {
     private readonly IOptions<CliCommandOptions> _cliOptions;
 
@@ -30,7 +30,7 @@ public sealed class CliService : ICliService
     {
         while (true)
         {
-            Console.Out.WriteLine(Constants.Messages.FILES_TO_GENERATE_INFO_MESSAGE);
+            Console.WriteLine(Constants.Messages.FILES_TO_GENERATE_INFO_MESSAGE);
 
             PrintCurrentOptionsChoices();
 
@@ -90,12 +90,12 @@ public sealed class CliService : ICliService
     {
         while (true)
         {
-            Console.Out.WriteLine(Constants.Messages.GET_DEPLOY_NAME_MESSAGE);
+            Console.WriteLine(Constants.Messages.GET_DEPLOY_NAME_MESSAGE);
 
             var input = Console.ReadLine();
             if (string.IsNullOrWhiteSpace(input))
             {
-                Console.Out.WriteLine(Constants.Messages.INVALID_INPUT_ERROR_MESSAGE);
+                Console.WriteLine(Constants.Messages.INVALID_INPUT_ERROR_MESSAGE);
                 Console.ReadKey();
                 continue;
             }
@@ -108,12 +108,12 @@ public sealed class CliService : ICliService
     {
         while (true)
         {
-            Console.Out.WriteLine(Constants.Messages.GET_IMAGE_NAME_MESSAGE);
+            Console.WriteLine(Constants.Messages.GET_IMAGE_NAME_MESSAGE);
 
             var input = Console.ReadLine();
             if (string.IsNullOrWhiteSpace(input))
             {
-                Console.Out.WriteLine(Constants.Messages.INVALID_INPUT_ERROR_MESSAGE);
+                Console.WriteLine(Constants.Messages.INVALID_INPUT_ERROR_MESSAGE);
                 Console.ReadKey();
                 continue;
             }
@@ -130,7 +130,7 @@ public sealed class CliService : ICliService
         {
             var fileChoice = _files[i];
 
-            Console.Out.WriteLine($"{i + 1} - [{(fileChoice.IsToGenerate ? 'x' : ' ')}] {string.Format(fileChoice.FileName, _cliOptions.Value.ApplicationName)}");
+            Console.WriteLine($"{i + 1} - [{(fileChoice.IsToGenerate ? 'x' : ' ')}] {string.Format(fileChoice.FileName, _cliOptions.Value.ApplicationName)}");
         }
     }
 }

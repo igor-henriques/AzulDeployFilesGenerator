@@ -1,21 +1,16 @@
-﻿using System.Reflection;
+﻿namespace AzulDeployFileGenerator.Domain.Validators;
 
-namespace AzulDeployFileGenerator.Domain.Validators;
-
-public sealed class AppSettingsValidator : IValidator<AppSettings>
+internal sealed class AppSettingsValidator : IValidator<AppSettings>
 {
     private readonly List<string> _errors = new();
-    private readonly IOptions<CliCommandOptions> _cliOptions;
     private readonly ISolutionFilesService _solutionFilesService;
     private readonly ILogger<AppSettingsValidator> _logger;
 
     public AppSettingsValidator(
         ISolutionFilesService solutionFilesService,
-        IOptions<CliCommandOptions> cliOptions,
         ILogger<AppSettingsValidator> logger)
     {
         _solutionFilesService = solutionFilesService;
-        _cliOptions = cliOptions;
         _logger = logger;
     }
 
@@ -92,26 +87,25 @@ public sealed class AppSettingsValidator : IValidator<AppSettings>
 
         if (!hasDistinctIds)
         {
-            _errors.Add("Bad ServiceClient setup. Duplicates found.");
+            _errors.Add("Bad ServiceClient setup. Duplicates found.\n");
             return;
         }
 
         foreach (var serviceClient in distinctServicesClients)
         {
-            _logger.LogInformation("Start validating service client Id {id}", serviceClient.Id);
+            _logger.LogInformation("Start validating service client Id {id}\n", serviceClient.Id);
 
-            bool isServiceClientValid = await _solutionFilesService.AnySolutionClassContainsText(
-                _cliOptions.Value.SolutionPath,
+            bool isServiceClientValid = await _solutionFilesService.ContainsTextInAnyCSharpFileAsync(
                 serviceClient.FormattedIdForSearchingInSolutionClasses,
-                cancellationToken);
+                cancellationToken: cancellationToken);
 
             if (!isServiceClientValid)
             {
-                _errors.Add($"Bad setup for ServiceClient Id {serviceClient.Id}");
+                _errors.Add($"Bad setup for ServiceClient Id {serviceClient.Id}\n");
             }
             else
             {
-                _logger.LogInformation("Service client Id {id} passed the validation", serviceClient.Id);
+                _logger.LogInformation("Service client Id {id} passed the validation\n", serviceClient.Id);
             }
         }
     }
