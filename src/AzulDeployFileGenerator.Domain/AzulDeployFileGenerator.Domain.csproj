@@ -1,16 +1,18 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>disable</Nullable>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net7.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>disable</Nullable>
+		<UserSecretsId>906934a2-7e6d-4523-b0d8-63c162134b92</UserSecretsId>
+	</PropertyGroup>
 
-  <ItemGroup>    
-    <PackageReference Include="EPPlus" Version="6.2.8" />    
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.0" />    
-    <PackageReference Include="Microsoft.Extensions.Options" Version="7.0.1" />    
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="EPPlus" Version="6.2.8" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="7.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Options" Version="7.0.1" />
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+	</ItemGroup>
 
 </Project>

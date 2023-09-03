@@ -3,17 +3,12 @@
 public static class CliParser
 {
     public static IEnumerable<CliCommand> ParseArgsAsCommands(string[] args)
-    {        
-        if (!args.Any(arg =>
-        {
-            return CliCommand.CliCommandTriggers[CliCommand.OUTPUT_PATH_COMMAND_ID].Contains(arg) 
-                || CliCommand.CliCommandTriggers[CliCommand.SOLUTION_PATH_COMMAND_ID].Contains(arg) 
-                || CliCommand.CliCommandTriggers[CliCommand.APP_TYPE_COMMAND_ID].Contains(arg);
-        }))
+    {
+        if (!args.Any(CliCommand.IsAnyOfRequiredTriggers))
         {
             throw new ApplicationException(Constants.Messages.INSUFFICIENT_ARGUMENTS_ERROR_MESSAGE);
         }
-        
+
         var triggersIndexes = GetIndexesWhereContainsDashes(args);
 
         foreach (var triggerIndex in triggersIndexes)
@@ -42,6 +37,5 @@ public static class CliParser
             .Select((Trigger, Index) => (Trigger, Index))
             .Where(x => x.Trigger.StartsWith('-') || x.Trigger.StartsWith("--"))
             .Select(x => x.Index);
-
     }
 }

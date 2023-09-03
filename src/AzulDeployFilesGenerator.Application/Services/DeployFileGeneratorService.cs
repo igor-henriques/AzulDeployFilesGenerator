@@ -4,7 +4,7 @@ internal sealed class DeployFileGeneratorService : IDeployFileGeneratorService
 {
     private readonly IOptions<CliCommandOptions> _cliOptions;
     private readonly IKubernetesDeploymentFactory _k8sDeployFactory;
-    private readonly ITokenizedAppSettingsFactory _tokenizedAppSettingsFactory;    
+    private readonly ITokenizedAppSettingsFactory _tokenizedAppSettingsFactory;
     private readonly IExcelSheetFactory _excelSheetFactory;
     private readonly IDockerfileFactory _dockerfileFactory;
 
@@ -51,8 +51,8 @@ internal sealed class DeployFileGeneratorService : IDeployFileGeneratorService
         var tokenizedAppSettings = _tokenizedAppSettingsFactory.BuildTokenizedAppSettingsAsync(appSettings, cancellationToken);
 
         await File.WriteAllTextAsync(
-            appSettingsDockerPath, 
-            tokenizedAppSettings, 
+            appSettingsDockerPath,
+            tokenizedAppSettings,
             cancellationToken);
     }
 
@@ -130,10 +130,10 @@ internal sealed class DeployFileGeneratorService : IDeployFileGeneratorService
     /// <returns></returns>
     public async Task GenerateTokenizationExcelSheet(AppSettings appSettings, CancellationToken cancellationToken = default)
     {
-        using var excel = await _excelSheetFactory.BuildExcelSheet(appSettings, cancellationToken);  
-        
+        using var excel = await _excelSheetFactory.BuildExcelSheet(appSettings, cancellationToken);
+
         var excelFile = new FileInfo(Path.Combine(
-            _cliOptions.Value.OutputPath, 
+            _cliOptions.Value.OutputPath,
             string.Format(Constants.FileNames.DeploySheet, _cliOptions.Value.ApplicationName)));
 
         await excel.SaveAsAsync(excelFile, cancellationToken);

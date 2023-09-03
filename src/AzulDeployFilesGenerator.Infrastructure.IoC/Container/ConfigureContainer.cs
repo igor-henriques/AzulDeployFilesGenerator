@@ -2,11 +2,11 @@
 
 public static class ConfigureContainer
 {
-    public static IHostBuilder ConfigureDependencies(this IHostBuilder hostBuilder)
+    public static IHostBuilder ConfigureDependencies(this IHostBuilder hostBuilder, IConfiguration configuration)
     {
         hostBuilder.ConfigureServices(services =>
         {
-            services.InjectServices();
+            services.InjectServices(configuration);
         });
 
         return hostBuilder;
@@ -44,16 +44,20 @@ public static class ConfigureContainer
         return hostBuilder;
     }
 
-    private static void InjectServices(this IServiceCollection services)
+    private static void InjectServices(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddLogging();
-        services.AddOptions();
 
         services.Configure<ConsoleLifetimeOptions>(options =>
         {
             options.SuppressStatusMessages = true;
         });
 
+        services.Configure<ApplicationDefaultsOptions>(configuration.GetSection("ApplicationDefaultsOptions"));
+
+        services.AddOptions();
+
+        services.AddSingleton(_ => configuration);
         services.AddSingleton<IOrchestrator, FileGeneratorOrchestrator>();
         services.AddSingleton<IDeployFileGeneratorService, DeployFileGeneratorService>();
         services.AddSingleton<ISolutionFilesService, SolutionFilesService>();

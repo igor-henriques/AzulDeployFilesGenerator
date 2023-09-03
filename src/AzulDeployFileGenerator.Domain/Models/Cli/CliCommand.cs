@@ -62,7 +62,7 @@ public sealed record CliCommand
     private void Validate()
     {
         if (IsOutputPathCommandType(Trigger) || IsSolutionPathCommandType(Trigger))
-        {            
+        {
             if (!Directory.Exists(Content))
             {
                 throw new InvalidOperationException(string.Format(Constants.Messages.INVALID_PATH_ERROR_MESSAGE, Content));
@@ -107,5 +107,12 @@ public sealed record CliCommand
     public static bool IsValidCommandTrigger(string trigger)
     {
         return CliCommandTriggers.Any(command => command.Value.Contains(trigger));
+    }
+
+    public static bool IsAnyOfRequiredTriggers(string arg)
+    {
+        return CliCommandTriggers[OUTPUT_PATH_COMMAND_ID].Contains(arg)
+                || CliCommandTriggers[SOLUTION_PATH_COMMAND_ID].Contains(arg)
+                || CliCommandTriggers[APP_TYPE_COMMAND_ID].Contains(arg);
     }
 }

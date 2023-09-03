@@ -1,4 +1,4 @@
-﻿namespace AzulDeployFileGenerator.Domain.Models.Cli;
+﻿namespace AzulDeployFileGenerator.Domain.Models.Options;
 
 public sealed record CliCommandOptions
 {

@@ -3,14 +3,18 @@
 internal sealed class ExcelSheetFactory : IExcelSheetFactory
 {
     private readonly IOptions<CliCommandOptions> _cliOptions;
+    private readonly IOptions<ApplicationDefaultsOptions> _appDefaultsOptions;
     private readonly ISolutionFilesService _solutionFilesService;
 
     public ExcelSheetFactory(
         IOptions<CliCommandOptions> cliOptions,
-        ISolutionFilesService solutionFilesService)
+        ISolutionFilesService solutionFilesService,
+        IOptions<ApplicationDefaultsOptions> appDefaultsOptions)
     {
         _cliOptions = cliOptions;
         _solutionFilesService = solutionFilesService;
+        _appDefaultsOptions = appDefaultsOptions;
+
         ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
     }
 
@@ -18,16 +22,173 @@ internal sealed class ExcelSheetFactory : IExcelSheetFactory
     {
         ExcelPackage excelPackage = new();
 
-        await GenerateRepositoryInfoWorksheet(excelPackage, cancellationToken);
+        GenerateRepositoryInfoWorksheet(excelPackage, cancellationToken);
         GenerateDockerImageWorksheet(excelPackage);
-        GenerateInfraAsCodeWorksheet(excelPackage, appSettings);
+        GenerateTokenizerWorksheet(excelPackage, appSettings);
+
+        if (_cliOptions.Value.ApplicationType is EApplicationType.Api)
+        {
+            GenerateApiGatewayWorksheet(excelPackage);
+        }
+
+        if (_cliOptions.Value.ApplicationType is EApplicationType.Consumer or EApplicationType.CronJob)
+        {
+            await GenerateInfraAsCodeWorksheet(excelPackage, appSettings, cancellationToken);
+        }
 
         return excelPackage;
     }
 
-    private async Task GenerateRepositoryInfoWorksheet(ExcelPackage excelPackage, CancellationToken cancellationToken = default)
+    private async Task GenerateInfraAsCodeWorksheet(ExcelPackage excelPackage, AppSettings appSettings, CancellationToken cancellationToken = default)
     {
-        (var parentDirectory, var csprojName) = await _solutionFilesService.FindEntrypointAssemblyAsync(cancellationToken: cancellationToken);
+        var hasSubscribers = await _solutionFilesService.HasAnySubscribers(cancellationToken: cancellationToken);
+        var hasPublishers = await _solutionFilesService.HasAnyPublishers(cancellationToken: cancellationToken);
+
+        var variables = appSettings.GetRawEnvVariables();
+
+        var infraAsCodeWorksheet = excelPackage.Workbook.Worksheets.Add("Infra As Code");
+
+        if (!hasSubscribers && !hasPublishers)
+        {
+            throw new ApplicationException(Constants.Messages.NO_APPSETTING_EVENT_CONSUMER_TYPE_ERROR_MESSAGE);
+        }
+
+        if (hasPublishers)
+        {
+            infraAsCodeWorksheet.Cells["A1"].Value = "Publisher";
+
+            infraAsCodeWorksheet.Cells["A2"].Value = "Variável (Aba Tokenizer)";
+            infraAsCodeWorksheet.Cells["B2"].Value = "Aplicação";
+            infraAsCodeWorksheet.Cells["C2"].Value = "Topic Name";
+            infraAsCodeWorksheet.Cells["D2"].Value = "Descrição";
+
+            infraAsCodeWorksheet.Cells["A3"].Value = "serviceBusSettings.publisherTopic";
+            infraAsCodeWorksheet.Cells["B3"].Value = _cliOptions.Value.ApplicationName;
+            infraAsCodeWorksheet.Cells["C3"].Value = appSettings.ServiceBusSettings.PublisherTopic;
+            infraAsCodeWorksheet.Cells["D3"].Value = ""; //Empty description for now
+
+            infraAsCodeWorksheet.SetBackgroundColor("A3:D3", _appDefaultsOptions.Value.ExcelDefaultGreenColorTone);
+        }
+
+        if (hasSubscribers)
+        {
+            int startRowPosition = hasPublishers ? 5 : 1;
+
+            infraAsCodeWorksheet.Cells[$"A{startRowPosition}"].Value = "Subscriber";
+
+            infraAsCodeWorksheet.Cells[$"A{startRowPosition + 1}"].Value = "Variável (Aba Tokenizer)";
+            infraAsCodeWorksheet.Cells[$"B{startRowPosition + 1}"].Value = "Subscription Name";
+            infraAsCodeWorksheet.Cells[$"C{startRowPosition + 1}"].Value = "Topic Name";
+            infraAsCodeWorksheet.Cells[$"D{startRowPosition + 1}"].Value = "Dead Lettering Expiration";
+            infraAsCodeWorksheet.Cells[$"E{startRowPosition + 1}"].Value = "Max Delivery";
+            infraAsCodeWorksheet.Cells[$"F{startRowPosition + 1}"].Value = "Message Sessions";
+            infraAsCodeWorksheet.Cells[$"G{startRowPosition + 1}"].Value = "Sql Filter";
+            infraAsCodeWorksheet.Cells[$"H{startRowPosition + 1}"].Value = "Auto Delete";
+
+            foreach (var eventModel in appSettings.Events.Select((Event, Index) => (Event, Index)))
+            {
+                var index = eventModel.Index + 2;
+
+                var connectionStringVariable = variables?.Where(var => var.Name.Contains(eventModel.Event.Id)
+                    && var.Value.Contains(eventModel.Event.ConnectionString))?.FirstOrDefault()?.Name;
+
+                var subscription = variables.FirstOrDefault(var => var.Name == $"events.{eventModel.Event.Id}.parameters.Subscription").Name;
+                var topic = variables.FirstOrDefault(var => var.Name == $"events.{eventModel.Event.Id}.parameters.Topic").Name;
+                var maxConcurrentCalls = "eventCustomSettings.AzureServiceBusSettings.MaxConcurrentCalls";
+
+                infraAsCodeWorksheet.Cells[$"A{startRowPosition + index}"].Value = connectionStringVariable;
+                infraAsCodeWorksheet.Cells[$"B{startRowPosition + index}"].Value = subscription;
+                infraAsCodeWorksheet.Cells[$"C{startRowPosition + index}"].Value = topic;
+                infraAsCodeWorksheet.Cells[$"D{startRowPosition + index}"].Value = "false";
+                infraAsCodeWorksheet.Cells[$"E{startRowPosition + index}"].Value = maxConcurrentCalls;
+                infraAsCodeWorksheet.Cells[$"F{startRowPosition + index}"].Value = "false";
+                infraAsCodeWorksheet.Cells[$"G{startRowPosition + index}"].Value = "1=1";
+                infraAsCodeWorksheet.Cells[$"H{startRowPosition + index}"].Value = "false";
+
+                infraAsCodeWorksheet.SetBackgroundColor($"A{startRowPosition + index}:H{startRowPosition + index}", _appDefaultsOptions.Value.ExcelDefaultGreenColorTone);
+            }
+        }
+
+        infraAsCodeWorksheet.SetGlobalStyling(_appDefaultsOptions.Value.ExcelFontName);
+        infraAsCodeWorksheet.SetBorder("A1");
+
+        if (hasSubscribers && hasPublishers)
+        {
+            infraAsCodeWorksheet.SetMenuDefaultStyling(_appDefaultsOptions.Value.ExcelMenuBackgroundColor, "A1", "A2:D2", "A5", "A6:H6");
+            infraAsCodeWorksheet.SetBorder("A2:D2");
+            infraAsCodeWorksheet.SetBorder("A5");
+            infraAsCodeWorksheet.SetBorder("A6:H6");
+        }
+        else if (hasSubscribers)
+        {
+            infraAsCodeWorksheet.SetMenuDefaultStyling(_appDefaultsOptions.Value.ExcelMenuBackgroundColor, "A1", "A2:H2");
+            infraAsCodeWorksheet.SetBorder("A2:H2");
+            infraAsCodeWorksheet.SetBorder("A3:H3");
+        }
+        else if (hasPublishers)
+        {
+            infraAsCodeWorksheet.SetMenuDefaultStyling(_appDefaultsOptions.Value.ExcelMenuBackgroundColor, "A1", "A2:D2");
+            infraAsCodeWorksheet.SetBorder("A2:D2");
+            infraAsCodeWorksheet.SetBorder("A3:D3");
+        }
+
+        (var firstCell, var lastCell) = infraAsCodeWorksheet.GetWorksheetDataRange();
+
+        infraAsCodeWorksheet.AutoFitColumns($"{firstCell}:{lastCell}", maxWidth: _appDefaultsOptions.Value.ExcelColumnWidth);
+    }
+
+    private void GenerateApiGatewayWorksheet(ExcelPackage excelPackage)
+    {
+        var apiGatewayWorksheet = excelPackage.Workbook.Worksheets.Add("Api Gateway");
+
+        apiGatewayWorksheet.Cells["A1"].Value = "Products";
+        apiGatewayWorksheet.Cells["A2"].Value = _cliOptions.Value.ApplicationName;
+
+        apiGatewayWorksheet.Cells["B1"].Value = "Subscription Required";
+        apiGatewayWorksheet.Cells["B2"].Value = "true";
+
+        apiGatewayWorksheet.SetBorder("A1:B2");
+
+        apiGatewayWorksheet.Cells["A5"].Value = "Environment";
+        apiGatewayWorksheet.Cells["A6"].Value = "TST";
+        apiGatewayWorksheet.Cells["A7"].Value = "STG";
+        apiGatewayWorksheet.Cells["A8"].Value = "PRD";
+
+        apiGatewayWorksheet.Cells["B5"].Value = "Ips Policy";
+
+        apiGatewayWorksheet.Cells["C5"].Value = "Public e/ou Private";
+        apiGatewayWorksheet.Cells["C6"].Value = "public";
+        apiGatewayWorksheet.Cells["C7"].Value = "public";
+        apiGatewayWorksheet.Cells["C8"].Value = "public";
+
+        apiGatewayWorksheet.Cells["D5"].Value = "Variavel";
+        apiGatewayWorksheet.Cells["D6"].Value = "swaggerdoc.host";
+        apiGatewayWorksheet.Cells["D7"].Value = "swaggerdoc.host";
+        apiGatewayWorksheet.Cells["D8"].Value = "swaggerdoc.host";
+
+        apiGatewayWorksheet.Cells["E5"].Value = "Service";
+        apiGatewayWorksheet.Cells["E6"].Value = $"{_cliOptions.Value.DeployName}-tst";
+        apiGatewayWorksheet.Cells["E7"].Value = $"{_cliOptions.Value.DeployName}-stg";
+        apiGatewayWorksheet.Cells["E8"].Value = $"{_cliOptions.Value.DeployName}-prd";
+
+        apiGatewayWorksheet.SetGlobalStyling(_appDefaultsOptions.Value.ExcelFontName);
+        apiGatewayWorksheet.SetMenuDefaultStyling(_appDefaultsOptions.Value.ExcelMenuBackgroundColor, "A1", "B1", "A5", "B5", "C5", "D5", "E5");
+        apiGatewayWorksheet.SetBorder("A5:E8");
+
+        apiGatewayWorksheet.SetBackgroundColor("A2", _appDefaultsOptions.Value.ExcelDefaultGreenColorTone);
+        apiGatewayWorksheet.SetBackgroundColor("B2", _appDefaultsOptions.Value.ExcelDefaultGreenColorTone);
+        apiGatewayWorksheet.SetBackgroundColor("A6:A8", _appDefaultsOptions.Value.ExcelDefaultGreenColorTone);
+        apiGatewayWorksheet.SetBackgroundColor("B6:B8", _appDefaultsOptions.Value.ExcelDefaultGreenColorTone);
+        apiGatewayWorksheet.SetBackgroundColor("C6:C8", _appDefaultsOptions.Value.ExcelDefaultGreenColorTone);
+        apiGatewayWorksheet.SetBackgroundColor("D6:D8", _appDefaultsOptions.Value.ExcelDefaultGreenColorTone);
+        apiGatewayWorksheet.SetBackgroundColor("E6:E8", _appDefaultsOptions.Value.ExcelDefaultGreenColorTone);
+
+        apiGatewayWorksheet.AutoFitColumns("A1:E8", maxWidth: _appDefaultsOptions.Value.ExcelColumnWidth);
+    }
+
+    private void GenerateRepositoryInfoWorksheet(ExcelPackage excelPackage, CancellationToken cancellationToken = default)
+    {
+        (var parentDirectory, var csprojName) = _solutionFilesService.FindEntrypointAssemblyAsync(cancellationToken: cancellationToken);
 
         var repositoryWorksheet = excelPackage.Workbook.Worksheets.Add("Dados Repositorio");
 
@@ -79,22 +240,22 @@ internal sealed class ExcelSheetFactory : IExcelSheetFactory
         repositoryWorksheet.Cells["A16"].Value = "Cor";
         repositoryWorksheet.Cells["B16"].Value = "Ações na planilha";
 
-        repositoryWorksheet.SetBackgroundColor("A17", Color.LimeGreen);
+        repositoryWorksheet.SetBackgroundColor("A17", _appDefaultsOptions.Value.ExcelDefaultGreenColorTone);
         repositoryWorksheet.Cells["B17"].Value = "Novas variáveis e valores";
 
-        repositoryWorksheet.SetBackgroundColor("A18", Color.Yellow);
+        repositoryWorksheet.SetBackgroundColor("A18", _appDefaultsOptions.Value.ExcelDefaultYellowColorTone);
         repositoryWorksheet.Cells["B18"].Value = "Alterar valores";
 
-        repositoryWorksheet.SetBackgroundColor("A19", Color.Orange);
+        repositoryWorksheet.SetBackgroundColor("A19", _appDefaultsOptions.Value.ExcelDefaultOrangeColorTone);
         repositoryWorksheet.Cells["B19"].Value = "Criar/Alterar valores que vão ser definidos pela arquitetura";
 
-        repositoryWorksheet.SetBackgroundColor("A20", Color.Red);
+        repositoryWorksheet.SetBackgroundColor("A20", _appDefaultsOptions.Value.ExcelDefaultRedColorTone);
         repositoryWorksheet.Cells["B20"].Value = "Remover variaveis e valores";
 
-        repositoryWorksheet.SetGlobalStyling();
-        repositoryWorksheet.SetMenuDefaultStyling("A1", "B1", "A16", "B16");
+        repositoryWorksheet.SetGlobalStyling(_appDefaultsOptions.Value.ExcelFontName);
+        repositoryWorksheet.SetMenuDefaultStyling(_appDefaultsOptions.Value.ExcelMenuBackgroundColor, "A1", "B1", "A16", "B16");
         repositoryWorksheet.SetBorder("A1:B20");
-        repositoryWorksheet.AutoFitColumns("A1:B20");
+        repositoryWorksheet.AutoFitColumns("A1:B20", maxWidth: _appDefaultsOptions.Value.ExcelColumnWidth);
     }
 
     private void GenerateDockerImageWorksheet(ExcelPackage excelPackage)
@@ -113,15 +274,52 @@ internal sealed class ExcelSheetFactory : IExcelSheetFactory
         dockerWorksheet.Cells["D1"].Value = "Descrição";
         dockerWorksheet.Cells["D2"].Value = Constants.Messages.DEFAULT_IMAGE_TOKENIZER_DESCRIPTION;
 
-        dockerWorksheet.SetGlobalStyling();
-        dockerWorksheet.SetMenuDefaultStyling("A1", "B1", "C1", "D1");
+        dockerWorksheet.SetGlobalStyling(_appDefaultsOptions.Value.ExcelFontName);
+        dockerWorksheet.SetMenuDefaultStyling(_appDefaultsOptions.Value.ExcelMenuBackgroundColor, "A1", "B1", "C1", "D1");
         dockerWorksheet.SetBorder("A1:D2");
-        dockerWorksheet.AutoFitColumns("A1:D2");
+        dockerWorksheet.AutoFitColumns("A1:D2", maxWidth: _appDefaultsOptions.Value.ExcelColumnWidth);
+
+        dockerWorksheet.SetBackgroundColor("A2:D2", _appDefaultsOptions.Value.ExcelDefaultGreenColorTone);
     }
 
-    private void GenerateInfraAsCodeWorksheet(ExcelPackage excelPackage, AppSettings appSettings)
+    private void GenerateTokenizerWorksheet(ExcelPackage excelPackage, AppSettings appSettings)
     {
+        var tokenizerWorksheet = excelPackage.Workbook.Worksheets.Add("Tokenizer");
 
+        tokenizerWorksheet.Cells["A1"].Value = "Arquivo Tokenizado";
+        tokenizerWorksheet.Cells["B1"].Value = "Variables";
+        tokenizerWorksheet.Cells["C1"].Value = "TST";
+        tokenizerWorksheet.Cells["D1"].Value = "STG";
+        tokenizerWorksheet.Cells["E1"].Value = "PRD";
+
+        var variables = appSettings.GetRawEnvVariables();
+        var tokenizedFilePath = $"{_cliOptions.Value.ApplicationName}/src/{Constants.FileNames.K8sYaml}";
+
+        tokenizerWorksheet.Cells["A2"].Value = tokenizedFilePath;
+        tokenizerWorksheet.Cells["B2"].Value = "environment";
+        tokenizerWorksheet.Cells["C2"].Value = "TST";
+        tokenizerWorksheet.Cells["D2"].Value = "STG";
+        tokenizerWorksheet.Cells["E2"].Value = "PRD";
+
+        foreach (var variableModel in variables.Select((Variable, Index) => (Variable, Index)))
+        {
+            var variable = variableModel.Variable;
+            var index = variableModel.Index + 3;
+
+            tokenizerWorksheet.Cells[$"A{index}"].Value = tokenizedFilePath;
+            tokenizerWorksheet.Cells[$"B{index}"].Value = variable.Name;
+            tokenizerWorksheet.Cells[$"C{index}"].Value = variable.Value.Replace("'", string.Empty);
+            tokenizerWorksheet.Cells[$"D{index}"].Value = variable.Value.Replace("'", string.Empty);
+            tokenizerWorksheet.Cells[$"E{index}"].Value = variable.Value.Replace("'", string.Empty);
+        }
+
+        (var firstCell, var lastCell) = tokenizerWorksheet.GetWorksheetDataRange();
+
+        tokenizerWorksheet.SetBackgroundColor($"{firstCell}:{lastCell}", _appDefaultsOptions.Value.ExcelDefaultGreenColorTone);
+        tokenizerWorksheet.SetGlobalStyling(_appDefaultsOptions.Value.ExcelFontName);
+        tokenizerWorksheet.SetMenuDefaultStyling(_appDefaultsOptions.Value.ExcelMenuBackgroundColor, "A1", "B1", "C1", "D1", "E1");
+        tokenizerWorksheet.SetBorder($"{firstCell}:{lastCell}");
+        tokenizerWorksheet.AutoFitColumns($"{firstCell}:{lastCell}", maxWidth: _appDefaultsOptions.Value.ExcelColumnWidth);
     }
 }
 
@@ -153,19 +351,19 @@ internal static class ExcelSheetFactoryExtensions
         worksheet.Cells[cell].Style.Font.Name = fontName;
     }
 
-    public static void SetMenuDefaultStyling(this ExcelWorksheet worksheet, params string[] cells)
+    public static void SetMenuDefaultStyling(this ExcelWorksheet worksheet, Color backgroundColor, params string[] cells)
     {
         foreach (var cell in cells)
         {
             worksheet.SetFontFamily(cell, Constants.ExcelDefaults.DEFAULT_FONT_NAME);
             worksheet.SetBoldFont(cell);
             worksheet.SetFontColor(cell, Color.White);
-            worksheet.SetBackgroundColor(cell, Constants.ExcelDefaults.DEFAULT_MENU_BACKGROUND_COLOR);
+            worksheet.SetBackgroundColor(cell, backgroundColor);
             worksheet.SetFontSize(cell, 12);
         }
     }
 
-    public static void SetGlobalStyling(this ExcelWorksheet worksheet)
+    public static void SetGlobalStyling(this ExcelWorksheet worksheet, string fontName)
     {
         var startCell = worksheet.Dimension.Start;
         var endCell = worksheet.Dimension.End;
@@ -174,7 +372,7 @@ internal static class ExcelSheetFactoryExtensions
         {
             for (int col = startCell.Column; col <= endCell.Column; col++)
             {
-                worksheet.Cells[row, col].Style.Font.Name = Constants.ExcelDefaults.DEFAULT_FONT_NAME;
+                worksheet.Cells[row, col].Style.Font.Name = fontName;
                 worksheet.Cells[row, col].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
                 worksheet.Cells[row, col].Style.VerticalAlignment = ExcelVerticalAlignment.Center;
             }
@@ -197,16 +395,16 @@ internal static class ExcelSheetFactoryExtensions
         border.Right.Color.SetColor(Color.Black);
     }
 
-    public static void AutoFitColumns(this ExcelWorksheet worksheet, string cells, double maxWidth = 0)
-    {        
+    public static void AutoFitColumns(this ExcelWorksheet worksheet, string cells, double? maxWidth = Constants.ExcelDefaults.MAX_COLUMN_WIDTH)
+    {
         string[] parts = cells.Split(':');
         string startCell = parts[0];
         string endCell = parts[1];
-        
+
         ExcelCellAddress startAddress = new(startCell);
         ExcelCellAddress endAddress = new(endCell);
 
-        Dictionary<int, double> colMaxWidth = new ();
+        Dictionary<int, double> colMaxWidth = new();
 
         for (int row = startAddress.Row; row <= endAddress.Row; row++)
         {
@@ -217,9 +415,16 @@ internal static class ExcelSheetFactoryExtensions
 
                 if (!colMaxWidth.ContainsKey(col) || requiredWidth > colMaxWidth[col])
                 {
-                    colMaxWidth[col] = requiredWidth > maxWidth
-                        ? maxWidth
-                        : requiredWidth;
+                    if (maxWidth.HasValue)
+                    {
+                        colMaxWidth[col] = requiredWidth > maxWidth.Value
+                           ? maxWidth.Value
+                           : requiredWidth;
+                    }
+                    else
+                    {
+                        colMaxWidth[col] = requiredWidth;
+                    }
                 }
             }
         }
@@ -228,5 +433,18 @@ internal static class ExcelSheetFactoryExtensions
         {
             worksheet.Column(col).Width = colMaxWidth[col];
         }
+    }
+
+    public static (string, string) GetWorksheetDataRange(this ExcelWorksheet worksheet)
+    {
+        int startRow = worksheet.Dimension.Start.Row;
+        int startColumn = worksheet.Dimension.Start.Column;
+        int endRow = worksheet.Dimension.End.Row;
+        int endColumn = worksheet.Dimension.End.Column;
+
+        string startCell = worksheet.Cells[startRow, startColumn].Address;
+        string endCell = worksheet.Cells[endRow, endColumn].Address;
+
+        return (startCell, endCell);
     }
 }

@@ -31,19 +31,16 @@ internal sealed class FileGeneratorOrchestrator : IOrchestrator
     public async Task OrchestrateAsync(CancellationToken cancellationToken = default)
     {
         _logger.LogInformation(Constants.Messages.EXECUTING_DOTNET_CLEAN_MESSAGE);
-
         _solutionFilesService.CleanSolutionFiles();
-
         _logger.LogInformation(Constants.Messages.SOLUTION_CLEANED);
 
-        _logger.LogInformation("Searching for {fileName}\n", Constants.FileNames.AppSettings);
 
+        _logger.LogInformation(Constants.Messages.SEARCHING_FILE_NAME_INFO_MESSAGE, Constants.FileNames.AppSettings);
         var appsettingsString = await _solutionFilesService.GetFileContentAsync(
             Constants.FileNames.AppSettings,
             cancellationToken: cancellationToken);
+        _logger.LogInformation(Constants.Messages.FILE_FOUND_INFO_MESSAGE, Constants.FileNames.AppSettings);
 
-        _logger.LogInformation("{fileName} found\n", Constants.FileNames.AppSettings);
-        
         var appsettingsObj = JsonConvert.DeserializeObject<AppSettings>(appsettingsString);
         await _appSettingsValidator.ValidateAndThrowAsync(appsettingsObj, cancellationToken);
 
@@ -85,18 +82,18 @@ internal sealed class FileGeneratorOrchestrator : IOrchestrator
             catch (Exception ex)
             {
                 var errorMessage = requestedFiles.Count > 1
-                    ? "Error generating {fileName}. Exception: {exception}\nMoving to the next."
-                    : "Error generating {fileName}. Exception: {exception}\nNo more files to generate.";
+                    ? Constants.Messages.EXCEPTION_GENERATING_FILE_WITH_MULTIPLES_REQUIRED_ERROR_MESSAGE
+                    : Constants.Messages.EXCEPTION_GENERATING_SINGLE_FILE_WITH_ERROR_MESSAGE;
 
                 _logger.LogError(errorMessage,
-                        fileToGenerate.FileName,
+                        string.Format(fileToGenerate.FileName, _cliOptions.Value.ApplicationName),
                         ex);
 
                 //If we had an exception generating some file, we want to continue so we don't have a success log.
                 continue;
             }
 
-            _logger.LogInformation("'{fileName}' successfully generated at {outputPath}\n\n", 
+            _logger.LogInformation(Constants.Messages.FILE_SUCCESSFULLY_GENERATED_INFO_MESSAGE,
                 string.Format(fileToGenerate.FileName, _cliOptions.Value.ApplicationName),
                 _cliOptions.Value.OutputPath);
         }

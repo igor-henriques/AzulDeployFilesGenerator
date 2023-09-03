@@ -1,9 +1,10 @@
 ﻿global using AzulDeployFileGenerator.CLI.Parsers;
+global using AzulDeployFileGenerator.Domain;
 global using AzulDeployFileGenerator.Domain.Interfaces;
+global using AzulDeployFileGenerator.Domain.Models.Cli;
 global using AzulDeployFilesGenerator.Console.Utils;
 global using AzulDeployFilesGenerator.Infrastructure.IoC.Container;
+global using Microsoft.Extensions.Configuration;
 global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.Extensions.Hosting;
 global using Microsoft.Extensions.Logging;
-global using AzulDeployFileGenerator.Domain;
-global using AzulDeployFileGenerator.Domain.Models.Cli;

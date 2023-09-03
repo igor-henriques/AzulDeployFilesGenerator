@@ -4,27 +4,30 @@ internal sealed class DockerfileFactory : IDockerfileFactory
 {
     private readonly IOptions<CliCommandOptions> _cliOptions;
     private readonly ISolutionFilesService _solutionFilesService;
+    private readonly IOptions<ApplicationDefaultsOptions> _appDefaultsOptions;
 
     public DockerfileFactory(
-        ISolutionFilesService solutionFilesService, 
-        IOptions<CliCommandOptions> cliOptions)
+        ISolutionFilesService solutionFilesService,
+        IOptions<CliCommandOptions> cliOptions,
+        IOptions<ApplicationDefaultsOptions> appDefaultsOptions)
     {
         _solutionFilesService = solutionFilesService;
         _cliOptions = cliOptions;
+        _appDefaultsOptions = appDefaultsOptions;
     }
 
-    private async Task<StringBuilder> GenerateDockerfileBuilder(CancellationToken cancellationToken = default)
+    private Task<StringBuilder> GenerateDockerfileBuilder(CancellationToken cancellationToken = default)
     {
         _solutionFilesService.ValidateNugetConfig();
 
         StringBuilder builder = new();
 
-        builder.AppendLine($"FROM {Constants.ImageNames.AzulAspNetCore} AS base");
+        builder.AppendLine($"FROM {_appDefaultsOptions.Value.AzulAspNetSdkImage} AS base");
         builder.AppendLine("WORKDIR /app");
 
         builder.Append('\n');
 
-        builder.AppendLine($"FROM {Constants.ImageNames.AzulDotNetCoreSdk} AS build");
+        builder.AppendLine($"FROM {_appDefaultsOptions.Value.AzulDotNetSdkImage} AS build");
         builder.AppendLine("WORKDIR /src");
 
         builder.Append('\n');
@@ -43,7 +46,7 @@ internal sealed class DockerfileFactory : IDockerfileFactory
             builder.AppendLine($"COPY [\"{parentDirectoryName}/{csprojName}\", \"{parentDirectoryName}/\"]");
         }
 
-        (var parentDirectoryEntrypoint, var entrypointAssemblyName) = await _solutionFilesService.FindEntrypointAssemblyAsync(cancellationToken: cancellationToken);
+        (var parentDirectoryEntrypoint, var entrypointAssemblyName) = _solutionFilesService.FindEntrypointAssemblyAsync(cancellationToken: cancellationToken);
 
         builder.Append('\n');
         builder.AppendLine($"RUN dotnet restore \"{parentDirectoryEntrypoint}/{entrypointAssemblyName}\"");
@@ -94,7 +97,7 @@ internal sealed class DockerfileFactory : IDockerfileFactory
 
         builder.AppendLine($"ENTRYPOINT [\"dotnet\", \"{_cliOptions.Value.ApplicationName}.dll\"]");
 
-        return builder;
+        return Task.FromResult(builder);
     }
 
     /// <summary>
@@ -117,8 +120,8 @@ internal sealed class DockerfileFactory : IDockerfileFactory
     {
         var dockerfileBuilder = await GenerateDockerfileBuilder(cancellationToken);
 
-        dockerfileBuilder.Replace(Constants.ImageNames.AzulDotNetCoreSdk, Constants.ImageNames.IsabkoDotNetCoreSdk);
-        dockerfileBuilder.Replace(Constants.ImageNames.AzulAspNetCore, Constants.ImageNames.IsabkoAspNetCore);
+        dockerfileBuilder.Replace(_appDefaultsOptions.Value.AzulDotNetSdkImage, _appDefaultsOptions.Value.OnlineDotNetSdkImage);
+        dockerfileBuilder.Replace(_appDefaultsOptions.Value.AzulAspNetSdkImage, _appDefaultsOptions.Value.OnlineAspNetSdkImage);
 
         return dockerfileBuilder.ToString();
     }

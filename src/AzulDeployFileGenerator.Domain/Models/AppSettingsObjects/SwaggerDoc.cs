@@ -6,7 +6,7 @@ public sealed record SwaggerDoc
     [IgnoreDockerTokenization]
     public string Name { get; set; }
 
-    [JsonProperty("host")]    
+    [JsonProperty("host")]
     public string Host { get; set; }
 
     [JsonProperty("schemes")]
@@ -14,6 +14,6 @@ public sealed record SwaggerDoc
     public List<string> Schemes { get; set; }
 
     [JsonProperty("info")]
-    [IgnoreDockerTokenization]                                                                          
+    [IgnoreDockerTokenization]
     public Info Info { get; set; }
 }

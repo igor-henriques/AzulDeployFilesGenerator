@@ -13,11 +13,15 @@ public interface ISolutionFilesService
     ValueTask<string> GetFileContentAsync(string fileName, string relativePath = null, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Search for a specific string content in all C# classes (.cs) in a given directory and its subdirectories.
+    /// Checks if the specified text is present in any C# file within a directory.
     /// </summary>
-    /// <param name="relativePath">Defaults to CliCommandOptions.SolutionPath</param>
-    /// <param name="text"></param>
-    /// <returns></returns>
+    /// <param name="text">The text to search for in the C# files.</param>
+    /// <param name="relativePath">The relative path where to look for the C# files. Defaults to the solution path.</param>
+    /// <param name="cancellationToken">The cancellation token to cancel the operation.</param>
+    /// <exception cref="IOException">Thrown when an I/O error occurs.</exception>
+    /// <exception cref="UnauthorizedAccessException">Thrown when the caller does not have the required permission.</exception>
+    /// <exception cref="ArgumentException">Thrown when one of the arguments provided to the method is invalid.</exception>
+    /// <returns>A <see cref="Task"/> that returns true if the text is found, otherwise false.</returns>
     Task<bool> ContainsTextInAnyCSharpFileAsync(string text, string relativePath = null, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -45,10 +49,16 @@ public interface ISolutionFilesService
     bool FindAnySslCertificates(out List<string> sslPath, string relativePath = null);
 
     /// <summary>
-    /// Validates if the Nuget.Config file exists in the solution path
+    /// Validates the NuGet configuration file in the given or default directory.
     /// </summary>
-    /// <param name="relativePath">Defaults to CliCommandOptions.SolutionPath</param>
-    void ValidateNugetConfig(string relativePath = null);
+    /// <param name="relativePath">The relative path where to look for the NuGet config file. Defaults to the solution path.</param>
+    /// <param name="cancellationToken">The cancellation token to cancel the operation.</param>
+    /// <exception cref="ApplicationException">Thrown when no NuGet config files are found in the directory.</exception>
+    /// <exception cref="ApplicationException">Thrown when more than one NuGet config file is found in the directory.</exception>
+    /// <exception cref="ApplicationException">Thrown when the Azul Framework NuGet key is not defined in the options.</exception>
+    /// <exception cref="ApplicationException">Thrown when the Azul Framework NuGet key is not found in the NuGet config file.</exception>
+    /// <returns>A <see cref="Task"/> representing the asynchronous validation operation.</returns>
+    Task ValidateNugetConfig(string relativePath = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Searches for the entrypoint assembly. When this method finds the Program.cs class, it'll return the relative assembly name, along with its parent directory.
@@ -56,7 +66,7 @@ public interface ISolutionFilesService
     /// <param name="relativePath">Defaults to CliCommandOptions.SolutionPath</param>
     /// <param name="cancellationToken"></param>    
     /// <returns>Parent Directory, *.csproj Name</returns>
-    Task<(string, string)> FindEntrypointAssemblyAsync(string relativePath = null, CancellationToken cancellationToken = default);
+    (string, string) FindEntrypointAssemblyAsync(string relativePath = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Searches for all *.csproj files in a given directory and its subdirectories.
@@ -64,4 +74,32 @@ public interface ISolutionFilesService
     /// <param name="relativePath">Defaults to CliCommandOptions.SolutionPath</param>
     /// <returns></returns>
     string[] FindAllCsprojFiles(string relativePath = null);
+
+    /// <summary>
+    /// Search for a Subscribers in all C# classes (.cs) in a given directory and its subdirectories.
+    /// </summary>
+    /// <param name="relativePath">Defaults to CliCommandOptions.SolutionPath</param>
+    /// <param name="text"></param>
+    /// <returns></returns>
+    Task<bool> HasAnySubscribers(string relativePath = null, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Search for a Publishers in all C# classes (.cs) in a given directory and its subdirectories.
+    /// </summary>
+    /// <param name="relativePath">Defaults to CliCommandOptions.SolutionPath</param>
+    /// <param name="text"></param>
+    /// <returns></returns>
+    Task<bool> HasAnyPublishers(string relativePath = null, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Retrieves a list of C# files from the specified directory that contain the given text.
+    /// </summary>
+    /// <param name="text">The text to search for in the C# files.</param>
+    /// <param name="relativePath">The relative path where to look for the C# files. Defaults to the solution path.</param>
+    /// <param name="cancellationToken">The cancellation token to cancel the operation.</param>
+    /// <exception cref="IOException">Thrown when an I/O error occurs.</exception>
+    /// <exception cref="UnauthorizedAccessException">Thrown when the caller does not have the required permission.</exception>
+    /// <exception cref="ArgumentException">Thrown when one of the arguments provided to the method is invalid.</exception>
+    /// <returns>A <see cref="Task"/> that returns a list of C# files containing the specified text.</returns>
+    Task<List<string>> GetCSharpFileWhereContainsText(string text, string relativePath = null, CancellationToken cancellationToken = default);
 }

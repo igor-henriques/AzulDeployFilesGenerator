@@ -10,4 +10,7 @@ public sealed record Event
 
     [JsonProperty("connectionString")]
     public string ConnectionString { get; set; }
+
+    [JsonProperty("parameters", NullValueHandling = NullValueHandling.Ignore)]
+    public List<Parameter> Parameters { get; set; }
 }

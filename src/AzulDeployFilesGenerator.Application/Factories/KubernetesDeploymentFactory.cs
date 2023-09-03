@@ -3,10 +3,12 @@
 internal sealed class KubernetesDeploymentFactory : IKubernetesDeploymentFactory
 {
     private readonly IOptions<CliCommandOptions> _cliOptions;
+    private readonly IOptions<ApplicationDefaultsOptions> _appDefaultsOptions;
     private readonly ISerializer _serializer;
 
     public KubernetesDeploymentFactory(
-        IOptions<CliCommandOptions> cliOptions)
+        IOptions<CliCommandOptions> cliOptions,
+        IOptions<ApplicationDefaultsOptions> appDefaultsOptions)
     {
         _cliOptions = cliOptions;
 
@@ -14,13 +16,14 @@ internal sealed class KubernetesDeploymentFactory : IKubernetesDeploymentFactory
           .WithNamingConvention(CamelCaseNamingConvention.Instance)
           .ConfigureDefaultValuesHandling(DefaultValuesHandling.OmitNull)
           .Build();
+        _appDefaultsOptions = appDefaultsOptions;
     }
 
     public async Task<string> BuildAzulKubernetesDeployment(
         AppSettings appSettings,
         CancellationToken cancellationToken = default)
     {
-        var envVariables = GetEnvVariables(appSettings);
+        var envVariables = appSettings.GetTokenizedEnvVariables();
         var k8sDeploy = await GetAzulDeployment(envVariables, cancellationToken);
         return k8sDeploy;
     }
@@ -29,7 +32,7 @@ internal sealed class KubernetesDeploymentFactory : IKubernetesDeploymentFactory
         AppSettings appSettings,
         CancellationToken cancellationToken = default)
     {
-        var envVariables = GetEnvVariables(appSettings, getRawValue: true);
+        var envVariables = appSettings.GetRawEnvVariables();
         var isabkoDeploy = await GetOnlineDeployment(envVariables, cancellationToken);
         return isabkoDeploy;
     }
@@ -47,6 +50,7 @@ internal sealed class KubernetesDeploymentFactory : IKubernetesDeploymentFactory
 
         StringBuilder builder = new(baseFile);
 
+        builder.Replace("$namespace", _appDefaultsOptions.Value.OnlineKubernetesNamespace);
         builder.Replace("$image-name", _cliOptions.Value.IsaBkoImageName);
         builder.Replace("$deploy-name", _cliOptions.Value.DeployName);
         builder.Replace("env:", $"env:\r\n{indentedVariables}");
@@ -57,7 +61,7 @@ internal sealed class KubernetesDeploymentFactory : IKubernetesDeploymentFactory
 
         if (!ValidateYaml(result))
         {
-            throw new InvalidDataException("Bad deploy yaml file indentation");
+            throw new ApplicationException("Bad deploy yaml file indentation");
         }
 
         return result;
@@ -86,7 +90,7 @@ internal sealed class KubernetesDeploymentFactory : IKubernetesDeploymentFactory
 
         if (!ValidateYaml(result))
         {
-            throw new InvalidDataException("Bad deploy yaml file indentation");
+            throw new ApplicationException("Bad deploy yaml file indentation");
         }
 
         return result;
@@ -112,130 +116,12 @@ internal sealed class KubernetesDeploymentFactory : IKubernetesDeploymentFactory
         try
         {
             var yamlStream = new YamlStream();
-            yamlStream.Load(new StringReader(originalYaml));            
+            yamlStream.Load(new StringReader(originalYaml));
             return true;
         }
         catch (Exception)
         {
             return false;
-        }        
-    }
-
-    private static List<EnvVariable> GetEnvVariables(object obj, string path = "", bool getRawValue = false)
-    {
-        List<EnvVariable> result = new();
-
-        foreach (PropertyInfo prop in obj.GetType().GetProperties())
-        {
-            if (!prop.CanRead || prop.GetIndexParameters().Length > 0)
-            {
-                continue;
-            }
-
-            if (prop.GetCustomAttribute<JsonIgnoreAttribute>() is not null)
-            {
-                continue;
-            }
-
-            if (prop.Name == nameof(AppSettings.ExtraProperties))
-            {
-                if (prop.GetValue(obj) is Dictionary<string, JToken> extraProperties)
-                {
-                    AddEnvVariablesFromProperties(extraProperties, result, getRawValue: getRawValue);
-                }
-
-                continue;
-            }
-
-            JsonPropertyAttribute jsonAttribute = prop.GetCustomAttribute<JsonPropertyAttribute>();
-            string jsonPropName = jsonAttribute?.PropertyName ?? prop.Name;
-            object value = prop.GetValue(obj);
-
-            var jsonPropertyAttribute = prop.GetCustomAttribute<JsonPropertyAttribute>();
-            if (jsonPropertyAttribute != null
-                && jsonPropertyAttribute.NullValueHandling == NullValueHandling.Ignore
-                && value is string or null
-                && string.IsNullOrWhiteSpace(value?.ToString()))
-            {
-                continue;
-            }
-
-            if (prop.GetCustomAttribute<IgnoreDockerTokenization>() != null
-                || prop.PropertyType.GetCustomAttribute<IgnoreDockerTokenization>() != null)
-            {
-                continue;
-            }
-
-            if (jsonPropName.Equals("id", StringComparison.OrdinalIgnoreCase)
-                    || (jsonPropName.Equals("key", StringComparison.OrdinalIgnoreCase)))
-            {
-                path += value.ToString() + ".";
-            }
-            else if (value is string || value is ValueType)
-            {
-                string tokenString = path + jsonPropName;
-
-                if (obj.GetType().Name is "Parameter"
-                    && jsonPropName.Equals("Value", StringComparison.OrdinalIgnoreCase))
-                {
-                    tokenString = tokenString[..tokenString.LastIndexOf('.')];
-                }
-
-                if (getRawValue)
-                {
-                    result.Add(new(tokenString, value?.ToString()));
-                }
-                else
-                {
-                    result.Add(new(tokenString, $"__{tokenString}__"));
-                }
-            }
-            else if (value is IList list)
-            {
-                List<EnvVariable> localEnvs = new();
-
-                for (int i = 0; i < list.Count; i++)
-                {
-                    object listItem = list[i];
-                    localEnvs.AddRange(GetEnvVariables(listItem, path + jsonPropName + ".", getRawValue: getRawValue));
-                }
-
-                result.AddRange(localEnvs);
-            }
-            else if (prop.PropertyType.IsClass)
-            {
-                result.AddRange(GetEnvVariables(value, path + jsonPropName + ".", getRawValue: getRawValue));
-            }
-        }
-
-        return result;
-    }
-
-    private static void AddEnvVariablesFromProperties(
-        Dictionary<string, JToken> properties,
-        List<EnvVariable> result,
-        string parentKey = "",
-        bool getRawValue = false)
-    {
-        foreach (var item in properties)
-        {
-            string key = string.IsNullOrEmpty(parentKey) ? item.Key : parentKey + "." + item.Key;
-
-            if (item.Value is JObject childObject)
-            {
-                AddEnvVariablesFromProperties(childObject.ToObject<Dictionary<string, JToken>>(), result, key, getRawValue: getRawValue);
-            }
-            else
-            {
-                if (getRawValue)
-                {
-                    result.Add(new EnvVariable(key, item.Value?.ToString()));
-                }
-                else
-                {
-                    result.Add(new EnvVariable(key, $"__{key}__"));
-                }
-            }
         }
     }
 }

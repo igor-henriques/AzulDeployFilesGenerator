@@ -1,4 +1,6 @@
-﻿ASCIIArt.PrintWelcome();
+﻿using AzulDeployFileGenerator.Domain.Models.Options;
+
+ASCIIArt.PrintWelcome();
 
 var logger = LoggerFactory.Create(builder =>
 {
@@ -15,19 +17,26 @@ try
         Environment.Exit(0);
     }
 
+    IConfiguration configuration = new ConfigurationBuilder()
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+            .AddEnvironmentVariables()
+            .AddUserSecrets<ApplicationDefaultsOptions>()
+            .Build();
+
     var commands = CliParser.ParseArgsAsCommands(args);
 
     var host = Host.CreateDefaultBuilder()
-        .ConfigureDependencies()
+        .ConfigureDependencies(configuration)
         .ConfigureCliCommandOptions(commands)
-        .Build();    
+        .Build();
 
     await host.Services
         .GetRequiredService<IOrchestrator>()
         .OrchestrateAsync(cancellationTokenSource.Token);
 }
 catch (Exception ex)
-{    
+{
     logger.LogError(Constants.Messages.GLOBAL_EXCEPTION_HANDLER_ERROR_MESSAGE, ex.Message);
     Console.ReadKey();
     Environment.Exit(Environment.ExitCode);

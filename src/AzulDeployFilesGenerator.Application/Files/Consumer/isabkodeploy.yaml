@@ -1,12 +1,12 @@
 apiVersion: v1
 kind: Namespace
 metadata:
- name: deploy-generator
+ name: $namespace
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
- namespace: deploy-generator
+ namespace: $namespace
  name: $deploy-name-tst-app-dep
  labels:
   app: $deploy-name-tst-app

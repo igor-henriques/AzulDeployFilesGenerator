@@ -3,8 +3,8 @@
 internal sealed class TokenizedAppSettingsFactory : ITokenizedAppSettingsFactory
 {
     public string BuildTokenizedAppSettingsAsync(AppSettings appSettings, CancellationToken cancellationToken = default)
-    {        
-        return TokenizeAppSettings(appSettings).ToString();        
+    {
+        return TokenizeAppSettings(appSettings).ToString();
     }
 
     private static JObject TokenizeFromExtraProperties(Dictionary<string, JToken> properties, string parentKey = "")

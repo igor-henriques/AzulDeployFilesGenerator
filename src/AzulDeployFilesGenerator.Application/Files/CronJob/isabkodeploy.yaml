@@ -1,12 +1,12 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: deploy-generator
+  name: $namespace
 ---
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  namespace: deploy-generator
+  namespace: $namespace
   name: $deploy-name-tst-app-crn
   labels:
     app: $deploy-name-tst-app
