@@ -1,5 +1,8 @@
 ﻿namespace AzulDeployFileGenerator.Domain.Models.Cli;
 
+/// <summary>
+/// Encapsulates CLI command details and their validation.
+/// </summary>
 public sealed record CliCommand
 {
     public const string OUTPUT_PATH_COMMAND_ID = "output";
@@ -8,7 +11,13 @@ public sealed record CliCommand
     public const string HELP_COMMAND_ID = "help";
     public const string DEPLOY_NAME_COMMAND_ID = "deploy-name";
     public const string IMAGE_NAME_COMMAND_ID = "image-name";
+    public const string GENERATE_ALL_FILES_COMMAND_ID = "all";
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="CliCommand"/> class.
+    /// </summary>
+    /// <param name="content">The content of the command.</param>
+    /// <param name="trigger">The trigger for the command.</param>
     public CliCommand(string content, string trigger)
     {
         Content = content;
@@ -22,8 +31,16 @@ public sealed record CliCommand
         Validate();
     }
 
+    /// <summary>
+    /// Gets or privately sets the content of the CLI command.
+    /// </summary>
     public string Content { get; private set; }
+
+    /// <summary>
+    /// Gets the trigger of the CLI command, init only.
+    /// </summary>
     public string Trigger { get; init; }
+
     public static bool IsOutputPathCommandType(string trigger)
     {
         return CliCommandTriggers
@@ -59,6 +76,16 @@ public sealed record CliCommand
            .Any();
     }
 
+    public static bool IsGenerateAllFilesCommandType(string trigger)
+    {
+        return CliCommandTriggers
+           .Where(command => command.Value.Contains(trigger) && command.Key.Equals(GENERATE_ALL_FILES_COMMAND_ID))
+           .Any();
+    }
+
+    /// <summary>
+    /// Validates the CLI command.
+    /// </summary>
     private void Validate()
     {
         if (IsOutputPathCommandType(Trigger) || IsSolutionPathCommandType(Trigger))
@@ -75,6 +102,9 @@ public sealed record CliCommand
         }
     }
 
+    /// <summary>
+    /// All predefined valid CLI command triggers.
+    /// </summary>
     public static readonly IReadOnlyDictionary<string, string[]> CliCommandTriggers = new Dictionary<string, string[]>()
     {
         { "output", new[] { "-output", "-o" } },
@@ -82,8 +112,12 @@ public sealed record CliCommand
         { "app-type", new[] { "--app-type", "--application-type", "-at"} },
         { "deploy-name", new[] { "--deploy-name", "-dn" } },
         { "image-name", new[] { "--image-name", "-in" } },
+        { "all", new[] { "-all" } },
     };
 
+    /// <summary>
+    /// Default application types.
+    /// </summary>
     public static readonly IReadOnlyList<string> DefaultAppTypes = new List<string>()
     {
         "api",
@@ -91,6 +125,10 @@ public sealed record CliCommand
         "cronjob"
     };
 
+    /// <summary>
+    /// Provides help commands in string format.
+    /// </summary>
+    /// <returns>A string representation of help commands.</returns>
     public static string GetHelpCommands()
     {
         StringBuilder builder = new();
@@ -100,15 +138,26 @@ public sealed record CliCommand
         builder.AppendLine($"[Required] Setting the app type so the generator creates the right deploy files: {string.Join(" or ", CliCommandTriggers[APP_TYPE_COMMAND_ID])} [{string.Join("/", DefaultAppTypes)}]");
         builder.AppendLine($"[Optional] Setting the deploy name so the generator be able to create the .yaml files correctly: {string.Join(" or ", CliCommandTriggers[DEPLOY_NAME_COMMAND_ID])}");
         builder.AppendLine($"[Optional] Setting the image name so the generator be able to create the .yaml files correctly: {string.Join(" or ", CliCommandTriggers[IMAGE_NAME_COMMAND_ID])}");
+        builder.AppendLine($"[Optional] Shortcut to generate all files without having to manually set: {string.Join(" or ", CliCommandTriggers[GENERATE_ALL_FILES_COMMAND_ID])}");
 
         return builder.ToString();
     }
 
+    /// <summary>
+    /// Checks if the given trigger is a valid command trigger.
+    /// </summary>
+    /// <param name="trigger">The trigger to check.</param>
+    /// <returns>True if it is a valid trigger, otherwise false.</returns>
     public static bool IsValidCommandTrigger(string trigger)
     {
         return CliCommandTriggers.Any(command => command.Value.Contains(trigger));
     }
 
+    /// <summary>
+    /// Checks if the given argument is any of the required triggers.
+    /// </summary>
+    /// <param name="arg">The argument to check.</param>
+    /// <returns>True if it is a required trigger, otherwise false.</returns>
     public static bool IsAnyOfRequiredTriggers(string arg)
     {
         return CliCommandTriggers[OUTPUT_PATH_COMMAND_ID].Contains(arg)

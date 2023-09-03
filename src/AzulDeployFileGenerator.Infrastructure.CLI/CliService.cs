@@ -1,4 +1,4 @@
-﻿using AzulDeployFileGenerator.Domain.Models.Options;
+﻿using System.Runtime.CompilerServices;
 using Console = System.Console;
 
 namespace AzulDeployFileGenerator.Infrastructure.CLI;
@@ -9,7 +9,7 @@ internal sealed class CliService : ICliService
 
     public CliService(IOptions<CliCommandOptions> cliOptions)
     {
-        _cliOptions = cliOptions;
+        _cliOptions = cliOptions ?? throw new ArgumentNullException(nameof(cliOptions)); ;
     }
 
     private readonly List<CliFileGenerateModel> _files = new()
@@ -28,6 +28,29 @@ internal sealed class CliService : ICliService
     /// </summary>    
     public List<CliFileGenerateModel> GetRequestedFilesToGenerate()
     {
+        if (_cliOptions.Value.GenerateAllFiles)
+        {
+            var filesToGenerate = new List<CliFileGenerateModel>()
+            {
+                 Constants.FileNames.AppSettingsOnline,
+                 Constants.FileNames.AppSettingsDocker
+            };
+
+            if (!string.IsNullOrWhiteSpace(_cliOptions.Value.DeployName) && !string.IsNullOrWhiteSpace(_cliOptions.Value.ImageName))
+            {
+                filesToGenerate.AddRange(new List<CliFileGenerateModel>()
+                {
+                     Constants.FileNames.K8sYaml,
+                     Constants.FileNames.IsaBkoYaml,
+                     Constants.FileNames.DeploySheet,
+                     Constants.FileNames.Dockerfile,
+                     Constants.FileNames.DockerfileOnline
+                });
+            }
+
+            return filesToGenerate;
+        }
+
         while (true)
         {
             Console.WriteLine(Constants.Messages.FILES_TO_GENERATE_INFO_MESSAGE);
@@ -35,7 +58,7 @@ internal sealed class CliService : ICliService
             PrintCurrentOptionsChoices();
 
             var input = Console.ReadLine();
-            if (input is "q")
+            if (input is Constants.DEFAULT_QUIT_CMD_FILES_SELECTION_CHAR)
             {
                 break;
             }
@@ -88,27 +111,19 @@ internal sealed class CliService : ICliService
 
     public string GetDeployName()
     {
-        while (true)
-        {
-            Console.WriteLine(Constants.Messages.GET_DEPLOY_NAME_MESSAGE);
-
-            var input = Console.ReadLine();
-            if (string.IsNullOrWhiteSpace(input))
-            {
-                Console.WriteLine(Constants.Messages.INVALID_INPUT_ERROR_MESSAGE);
-                Console.ReadKey();
-                continue;
-            }
-
-            return input.Trim();
-        }
+        return GetInput(Constants.Messages.GET_DEPLOY_NAME_MESSAGE);
     }
 
     public string GetImageName()
     {
+        return GetInput(Constants.Messages.GET_IMAGE_NAME_MESSAGE);
+    }
+
+    private static string GetInput(string message)
+    {
         while (true)
         {
-            Console.WriteLine(Constants.Messages.GET_IMAGE_NAME_MESSAGE);
+            Console.WriteLine(message);
 
             var input = Console.ReadLine();
             if (string.IsNullOrWhiteSpace(input))

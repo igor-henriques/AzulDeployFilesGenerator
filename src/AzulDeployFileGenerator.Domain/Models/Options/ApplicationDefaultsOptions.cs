@@ -26,5 +26,6 @@ public sealed record ApplicationDefaultsOptions
     public string AzulAspNetSdkImage { get; init; } = Constants.ImageNames.AZUL_ASPNET_CORE;
     public string OnlineDotNetSdkImage { get; init; } = Constants.ImageNames.ISABKO_DOTNET_CORE_SDK;
     public string OnlineAspNetSdkImage { get; init; } = Constants.ImageNames.ISABKO_ASPNET_CORE;
+    public int ExposedApiPortDockerfile { get; init; } = Constants.DEFAULT_EXPOSED_API_PORT_DOCKERFILE;
     public string AzulFrameworkNugetKey { get; init; }
 }

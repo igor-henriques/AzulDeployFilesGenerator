@@ -26,6 +26,7 @@ public static class ConfigureContainer
         var appType = commands.FirstOrDefault(command => CliCommand.IsAppTypeCommandType(command.Trigger))?.Content;
         var deployName = commands.FirstOrDefault(command => CliCommand.IsDeployNameCommandType(command.Trigger))?.Content;
         var imageName = commands.FirstOrDefault(command => CliCommand.IsImageNameCommandType(command.Trigger))?.Content;
+        var generateAllFiles = commands.Any(command => CliCommand.IsGenerateAllFilesCommandType(command.Trigger));
 
         if (new string?[] { solutionPath, outputPath, appType }.Any(string.IsNullOrWhiteSpace))
         {
@@ -38,7 +39,8 @@ public static class ConfigureContainer
                    .SetOutputPath(outputPath)
                    .SetApplicationType(appType)
                    .SetDeployName(deployName)
-                   .SetImageName(imageName);
+                   .SetImageName(imageName)
+                   .SetGenerateAllFiles(generateAllFiles);
         }));
 
         return hostBuilder;

@@ -89,7 +89,7 @@ internal sealed class FileGeneratorOrchestrator : IOrchestrator
                         string.Format(fileToGenerate.FileName, _cliOptions.Value.ApplicationName),
                         ex);
 
-                //If we had an exception generating some file, we want to continue so we don't have a success log.
+                //If we had an exception generating some file, we want to continue so we don't have a wrong success log.
                 continue;
             }
 

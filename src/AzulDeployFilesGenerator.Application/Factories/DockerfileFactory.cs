@@ -92,7 +92,7 @@ internal sealed class DockerfileFactory : IDockerfileFactory
 
         if (_cliOptions.Value.ApplicationType is EApplicationType.Api)
         {
-            builder.AppendLine("EXPOSE 80");
+            builder.AppendLine($"EXPOSE {_appDefaultsOptions.Value.ExposedApiPortDockerfile}");
         }
 
         builder.AppendLine($"ENTRYPOINT [\"dotnet\", \"{_cliOptions.Value.ApplicationName}.dll\"]");

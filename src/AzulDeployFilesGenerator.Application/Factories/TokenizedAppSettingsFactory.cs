@@ -1,12 +1,27 @@
 ﻿namespace AzulDeployFilesGenerator.Application.Factories;
 
+/// <summary>
+/// Provides functionality to tokenize AppSettings for configuration.
+/// </summary>
 internal sealed class TokenizedAppSettingsFactory : ITokenizedAppSettingsFactory
 {
+    /// <summary>
+    /// Builds a string representation of tokenized AppSettings.
+    /// </summary>
+    /// <param name="appSettings">The AppSettings object to tokenize.</param>
+    /// <param name="cancellationToken">Cancellation token for async operation.</param>
+    /// <returns>String representation of tokenized AppSettings.</returns>
     public string BuildTokenizedAppSettingsAsync(AppSettings appSettings, CancellationToken cancellationToken = default)
     {
         return TokenizeAppSettings(appSettings).ToString();
     }
 
+    /// <summary>
+    /// Tokenizes the extra properties in the AppSettings object.
+    /// </summary>
+    /// <param name="properties">Dictionary of extra properties.</param>
+    /// <param name="parentKey">Optional parent key for nested objects.</param>
+    /// <returns>A JObject with tokenized extra properties.</returns>
     private static JObject TokenizeFromExtraProperties(Dictionary<string, JToken> properties, string parentKey = "")
     {
         JObject result = new();
@@ -30,6 +45,12 @@ internal sealed class TokenizedAppSettingsFactory : ITokenizedAppSettingsFactory
         return result;
     }
 
+    /// <summary>
+    /// Tokenizes the AppSettings object.
+    /// </summary>
+    /// <param name="obj">Object to tokenize.</param>
+    /// <param name="path">Path for nested properties.</param>
+    /// <returns>A JObject with tokenized AppSettings.</returns>
     private static JObject TokenizeAppSettings(object obj, string path = "")
     {
         if (obj.GetType().GetCustomAttribute<IgnoreDockerTokenization>() != null)

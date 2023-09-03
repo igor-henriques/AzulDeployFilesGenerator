@@ -1,24 +1,40 @@
 ﻿namespace AzulDeployFilesGenerator.Application.Factories;
 
+/// <summary>
+/// Factory for generating Kubernetes deployment files tailored for Azul and Online environments.
+/// This factory uses application settings and CLI options to populate environment variables and other settings in the deployment files.
+/// </summary>
 internal sealed class KubernetesDeploymentFactory : IKubernetesDeploymentFactory
 {
     private readonly IOptions<CliCommandOptions> _cliOptions;
     private readonly IOptions<ApplicationDefaultsOptions> _appDefaultsOptions;
     private readonly ISerializer _serializer;
 
+    /// <summary>
+    /// Constructor that initializes CLI options, Application Default options, and configures the YAML serializer.
+    /// </summary>
+    /// <param name="cliOptions">CLI options passed to the application.</param>
+    /// <param name="appDefaultsOptions">Default application settings.</param>    
+    /// <exception cref="ArgumentNullException">Thrown if either <paramref name="cliOptions"/> or <paramref name="appDefaultsOptions"/> is null.</exception>
     public KubernetesDeploymentFactory(
         IOptions<CliCommandOptions> cliOptions,
         IOptions<ApplicationDefaultsOptions> appDefaultsOptions)
     {
-        _cliOptions = cliOptions;
+        _cliOptions = cliOptions ?? throw new ArgumentNullException(nameof(cliOptions));
+        _appDefaultsOptions = appDefaultsOptions ?? throw new ArgumentNullException(nameof(appDefaultsOptions));
 
         _serializer = new SerializerBuilder()
           .WithNamingConvention(CamelCaseNamingConvention.Instance)
           .ConfigureDefaultValuesHandling(DefaultValuesHandling.OmitNull)
-          .Build();
-        _appDefaultsOptions = appDefaultsOptions;
+          .Build();        
     }
 
+    /// <summary>
+    /// Builds a Kubernetes deployment file specifically for the Azul environment.
+    /// </summary>
+    /// <param name="appSettings">Application settings.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A string representation of the Azul Kubernetes deployment file.</returns>
     public async Task<string> BuildAzulKubernetesDeployment(
         AppSettings appSettings,
         CancellationToken cancellationToken = default)
@@ -28,6 +44,12 @@ internal sealed class KubernetesDeploymentFactory : IKubernetesDeploymentFactory
         return k8sDeploy;
     }
 
+    /// <summary>
+    /// Builds a Kubernetes deployment file specifically for the Online environment.
+    /// </summary>
+    /// <param name="appSettings">Application settings.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A string representation of the Online Kubernetes deployment file.</returns>
     public async Task<string> BuildOnlineKubernetesDeployment(
         AppSettings appSettings,
         CancellationToken cancellationToken = default)
@@ -37,6 +59,12 @@ internal sealed class KubernetesDeploymentFactory : IKubernetesDeploymentFactory
         return isabkoDeploy;
     }
 
+    /// <summary>
+    /// Generates a Kubernetes deployment file for the Online environment by replacing placeholders in the base file.
+    /// </summary>
+    /// <param name="variables">Environment variables.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A string representation of the Online Kubernetes deployment file.</returns>
     private async Task<string> GetOnlineDeployment(
         List<EnvVariable> variables,
         CancellationToken cancellationToken = default)
@@ -67,6 +95,12 @@ internal sealed class KubernetesDeploymentFactory : IKubernetesDeploymentFactory
         return result;
     }
 
+    /// <summary>
+    /// Generates a Kubernetes deployment file for the Azul environment by replacing placeholders in the base file.
+    /// </summary>
+    /// <param name="variables">Environment variables.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A string representation of the Azul Kubernetes deployment file.</returns>
     private async Task<string> GetAzulDeployment(
         List<EnvVariable> variables,
         CancellationToken cancellationToken = default)
@@ -96,6 +130,11 @@ internal sealed class KubernetesDeploymentFactory : IKubernetesDeploymentFactory
         return result;
     }
 
+    /// <summary>
+    /// Indents a YAML string according to the application type.
+    /// </summary>
+    /// <param name="yamlString">The original YAML string.</param>
+    /// <returns>An indented YAML string.</returns>
     private string IndentYamlString(string yamlString)
     {
         var indentationLevel = _cliOptions.Value.ApplicationType switch
@@ -111,6 +150,11 @@ internal sealed class KubernetesDeploymentFactory : IKubernetesDeploymentFactory
         return string.Join("\n", indentedLines);
     }
 
+    /// <summary>
+    /// Validates the generated YAML string to ensure it is well-formed.
+    /// </summary>
+    /// <param name="originalYaml">The YAML string to validate.</param>
+    /// <returns>True if the YAML is valid; otherwise, false.</returns>
     private static bool ValidateYaml(string originalYaml)
     {
         try

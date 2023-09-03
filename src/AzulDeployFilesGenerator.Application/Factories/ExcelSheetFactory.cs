@@ -6,18 +6,30 @@ internal sealed class ExcelSheetFactory : IExcelSheetFactory
     private readonly IOptions<ApplicationDefaultsOptions> _appDefaultsOptions;
     private readonly ISolutionFilesService _solutionFilesService;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ExcelSheetFactory"/> class.
+    /// </summary>
+    /// <param name="cliOptions">The CLI options.</param>
+    /// <param name="solutionFilesService">The service for handling solution files.</param>
+    /// <param name="appDefaultsOptions">The default application options.</param>
     public ExcelSheetFactory(
         IOptions<CliCommandOptions> cliOptions,
         ISolutionFilesService solutionFilesService,
         IOptions<ApplicationDefaultsOptions> appDefaultsOptions)
     {
-        _cliOptions = cliOptions;
-        _solutionFilesService = solutionFilesService;
-        _appDefaultsOptions = appDefaultsOptions;
+        _cliOptions = cliOptions ?? throw new ArgumentNullException(nameof(cliOptions));
+        _solutionFilesService = solutionFilesService ?? throw new ArgumentNullException(nameof(solutionFilesService));
+        _appDefaultsOptions = appDefaultsOptions ?? throw new ArgumentNullException(nameof(appDefaultsOptions));
 
         ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
     }
 
+    /// <summary>
+    /// Builds an Excel sheet based on the application settings.
+    /// </summary>
+    /// <param name="appSettings">The application settings.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>An Excel package containing all the information.</returns>
     public async Task<ExcelPackage> BuildExcelSheet(AppSettings appSettings, CancellationToken cancellationToken = default)
     {
         ExcelPackage excelPackage = new();
@@ -39,6 +51,13 @@ internal sealed class ExcelSheetFactory : IExcelSheetFactory
         return excelPackage;
     }
 
+    /// <summary>
+    /// Generates the 'Infra As Code' worksheet in the Excel package.
+    /// </summary>
+    /// <param name="excelPackage">The Excel package object.</param>
+    /// <param name="appSettings">The application settings.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A Task representing the asynchronous operation.</returns>
     private async Task GenerateInfraAsCodeWorksheet(ExcelPackage excelPackage, AppSettings appSettings, CancellationToken cancellationToken = default)
     {
         var hasSubscribers = await _solutionFilesService.HasAnySubscribers(cancellationToken: cancellationToken);
@@ -137,6 +156,10 @@ internal sealed class ExcelSheetFactory : IExcelSheetFactory
         infraAsCodeWorksheet.AutoFitColumns($"{firstCell}:{lastCell}", maxWidth: _appDefaultsOptions.Value.ExcelColumnWidth);
     }
 
+    /// <summary>
+    /// Generates the 'Api Gateway' worksheet in the Excel package.
+    /// </summary>
+    /// <param name="excelPackage">The Excel package object.</param>
     private void GenerateApiGatewayWorksheet(ExcelPackage excelPackage)
     {
         var apiGatewayWorksheet = excelPackage.Workbook.Worksheets.Add("Api Gateway");
@@ -175,17 +198,21 @@ internal sealed class ExcelSheetFactory : IExcelSheetFactory
         apiGatewayWorksheet.SetMenuDefaultStyling(_appDefaultsOptions.Value.ExcelMenuBackgroundColor, "A1", "B1", "A5", "B5", "C5", "D5", "E5");
         apiGatewayWorksheet.SetBorder("A5:E8");
 
-        apiGatewayWorksheet.SetBackgroundColor("A2", _appDefaultsOptions.Value.ExcelDefaultGreenColorTone);
-        apiGatewayWorksheet.SetBackgroundColor("B2", _appDefaultsOptions.Value.ExcelDefaultGreenColorTone);
-        apiGatewayWorksheet.SetBackgroundColor("A6:A8", _appDefaultsOptions.Value.ExcelDefaultGreenColorTone);
-        apiGatewayWorksheet.SetBackgroundColor("B6:B8", _appDefaultsOptions.Value.ExcelDefaultGreenColorTone);
-        apiGatewayWorksheet.SetBackgroundColor("C6:C8", _appDefaultsOptions.Value.ExcelDefaultGreenColorTone);
-        apiGatewayWorksheet.SetBackgroundColor("D6:D8", _appDefaultsOptions.Value.ExcelDefaultGreenColorTone);
-        apiGatewayWorksheet.SetBackgroundColor("E6:E8", _appDefaultsOptions.Value.ExcelDefaultGreenColorTone);
-
-        apiGatewayWorksheet.AutoFitColumns("A1:E8", maxWidth: _appDefaultsOptions.Value.ExcelColumnWidth);
+        apiGatewayWorksheet.SetBackgroundColor("A2", _appDefaultsOptions.Value.ExcelDefaultGreenColorTone)
+            .SetBackgroundColor("B2", _appDefaultsOptions.Value.ExcelDefaultGreenColorTone)
+            .SetBackgroundColor("A6:A8", _appDefaultsOptions.Value.ExcelDefaultGreenColorTone)
+            .SetBackgroundColor("B6:B8", _appDefaultsOptions.Value.ExcelDefaultGreenColorTone)
+            .SetBackgroundColor("C6:C8", _appDefaultsOptions.Value.ExcelDefaultGreenColorTone)
+            .SetBackgroundColor("D6:D8", _appDefaultsOptions.Value.ExcelDefaultGreenColorTone)
+            .SetBackgroundColor("E6:E8", _appDefaultsOptions.Value.ExcelDefaultGreenColorTone)
+            .AutoFitColumns("A1:E8", maxWidth: _appDefaultsOptions.Value.ExcelColumnWidth);
     }
 
+    /// <summary>
+    /// Generates the 'Repository Info' worksheet in the Excel package.
+    /// </summary>
+    /// <param name="excelPackage">The Excel package object.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
     private void GenerateRepositoryInfoWorksheet(ExcelPackage excelPackage, CancellationToken cancellationToken = default)
     {
         (var parentDirectory, var csprojName) = _solutionFilesService.FindEntrypointAssemblyAsync(cancellationToken: cancellationToken);
@@ -252,12 +279,16 @@ internal sealed class ExcelSheetFactory : IExcelSheetFactory
         repositoryWorksheet.SetBackgroundColor("A20", _appDefaultsOptions.Value.ExcelDefaultRedColorTone);
         repositoryWorksheet.Cells["B20"].Value = "Remover variaveis e valores";
 
-        repositoryWorksheet.SetGlobalStyling(_appDefaultsOptions.Value.ExcelFontName);
-        repositoryWorksheet.SetMenuDefaultStyling(_appDefaultsOptions.Value.ExcelMenuBackgroundColor, "A1", "B1", "A16", "B16");
-        repositoryWorksheet.SetBorder("A1:B20");
-        repositoryWorksheet.AutoFitColumns("A1:B20", maxWidth: _appDefaultsOptions.Value.ExcelColumnWidth);
+        repositoryWorksheet.SetGlobalStyling(_appDefaultsOptions.Value.ExcelFontName)
+            .SetMenuDefaultStyling(_appDefaultsOptions.Value.ExcelMenuBackgroundColor, "A1", "B1", "A16", "B16")
+            .SetBorder("A1:B20")
+            .AutoFitColumns("A1:B20", maxWidth: _appDefaultsOptions.Value.ExcelColumnWidth);
     }
 
+    /// <summary>
+    /// Generates the 'Docker Image' worksheet in the Excel package.
+    /// </summary>
+    /// <param name="excelPackage">The Excel package object.</param>
     private void GenerateDockerImageWorksheet(ExcelPackage excelPackage)
     {
         var dockerWorksheet = excelPackage.Workbook.Worksheets.Add("Imagem");
@@ -274,14 +305,18 @@ internal sealed class ExcelSheetFactory : IExcelSheetFactory
         dockerWorksheet.Cells["D1"].Value = "Descrição";
         dockerWorksheet.Cells["D2"].Value = Constants.Messages.DEFAULT_IMAGE_TOKENIZER_DESCRIPTION;
 
-        dockerWorksheet.SetGlobalStyling(_appDefaultsOptions.Value.ExcelFontName);
-        dockerWorksheet.SetMenuDefaultStyling(_appDefaultsOptions.Value.ExcelMenuBackgroundColor, "A1", "B1", "C1", "D1");
-        dockerWorksheet.SetBorder("A1:D2");
-        dockerWorksheet.AutoFitColumns("A1:D2", maxWidth: _appDefaultsOptions.Value.ExcelColumnWidth);
-
-        dockerWorksheet.SetBackgroundColor("A2:D2", _appDefaultsOptions.Value.ExcelDefaultGreenColorTone);
+        dockerWorksheet.SetGlobalStyling(_appDefaultsOptions.Value.ExcelFontName)
+            .SetMenuDefaultStyling(_appDefaultsOptions.Value.ExcelMenuBackgroundColor, "A1", "B1", "C1", "D1")
+            .SetBorder("A1:D2")
+            .AutoFitColumns("A1:D2", maxWidth: _appDefaultsOptions.Value.ExcelColumnWidth)
+            .SetBackgroundColor("A2:D2", _appDefaultsOptions.Value.ExcelDefaultGreenColorTone);
     }
 
+    /// <summary>
+    /// Generates the 'Tokenizer' worksheet in the Excel package.
+    /// </summary>
+    /// <param name="excelPackage">The Excel package object.</param>
+    /// <param name="appSettings">The application settings.</param>
     private void GenerateTokenizerWorksheet(ExcelPackage excelPackage, AppSettings appSettings)
     {
         var tokenizerWorksheet = excelPackage.Workbook.Worksheets.Add("Tokenizer");
@@ -315,43 +350,89 @@ internal sealed class ExcelSheetFactory : IExcelSheetFactory
 
         (var firstCell, var lastCell) = tokenizerWorksheet.GetWorksheetDataRange();
 
-        tokenizerWorksheet.SetBackgroundColor($"{firstCell}:{lastCell}", _appDefaultsOptions.Value.ExcelDefaultGreenColorTone);
-        tokenizerWorksheet.SetGlobalStyling(_appDefaultsOptions.Value.ExcelFontName);
-        tokenizerWorksheet.SetMenuDefaultStyling(_appDefaultsOptions.Value.ExcelMenuBackgroundColor, "A1", "B1", "C1", "D1", "E1");
-        tokenizerWorksheet.SetBorder($"{firstCell}:{lastCell}");
-        tokenizerWorksheet.AutoFitColumns($"{firstCell}:{lastCell}", maxWidth: _appDefaultsOptions.Value.ExcelColumnWidth);
+        tokenizerWorksheet.SetBackgroundColor($"{firstCell}:{lastCell}", _appDefaultsOptions.Value.ExcelDefaultGreenColorTone)
+            .SetGlobalStyling(_appDefaultsOptions.Value.ExcelFontName)
+            .SetMenuDefaultStyling(_appDefaultsOptions.Value.ExcelMenuBackgroundColor, "A1", "B1", "C1", "D1", "E1")
+            .SetBorder($"{firstCell}:{lastCell}")
+            .AutoFitColumns($"{firstCell}:{lastCell}", maxWidth: _appDefaultsOptions.Value.ExcelColumnWidth);
     }
 }
 
 internal static class ExcelSheetFactoryExtensions
 {
-    public static void SetBackgroundColor(this ExcelWorksheet worksheet, string cell, Color color)
+    /// <summary>
+    /// Sets the background color of the specified cell.
+    /// </summary>
+    /// <param name="worksheet">The worksheet object.</param>
+    /// <param name="cell">The cell reference as a string.</param>
+    /// <param name="color">The color to set.</param>
+    /// <returns>The updated ExcelWorksheet object.</returns>
+    public static ExcelWorksheet SetBackgroundColor(this ExcelWorksheet worksheet, string cell, Color color)
     {
         worksheet.Cells[cell].Style.Fill.PatternType = ExcelFillStyle.Solid;
         worksheet.Cells[cell].Style.Fill.BackgroundColor.SetColor(color);
+        return worksheet;
     }
 
-    public static void SetFontColor(this ExcelWorksheet worksheet, string cell, Color color)
+    /// <summary>
+    /// Sets the font color of the specified cell.
+    /// </summary>
+    /// <param name="worksheet">The worksheet object.</param>
+    /// <param name="cell">The cell reference as a string.</param>
+    /// <param name="color">The color to set.</param>
+    /// <returns>The updated ExcelWorksheet object.</returns>
+    public static ExcelWorksheet SetFontColor(this ExcelWorksheet worksheet, string cell, Color color)
     {
         worksheet.Cells[cell].Style.Font.Color.SetColor(color);
+        return worksheet;
     }
 
-    public static void SetFontSize(this ExcelWorksheet worksheet, string cell, float fontSize)
+    /// <summary>
+    /// Sets the font size of the specified cell.
+    /// </summary>
+    /// <param name="worksheet">The worksheet object.</param>
+    /// <param name="cell">The cell reference as a string.</param>
+    /// <param name="fontSize">The font size to set.</param>
+    /// <returns>The updated ExcelWorksheet object.</returns>
+    public static ExcelWorksheet SetFontSize(this ExcelWorksheet worksheet, string cell, float fontSize)
     {
         worksheet.Cells[cell].Style.Font.Size = fontSize;
+        return worksheet;
     }
 
-    public static void SetBoldFont(this ExcelWorksheet worksheet, string cell)
+    /// <summary>
+    /// Makes the font of the specified cell bold.
+    /// </summary>
+    /// <param name="worksheet">The worksheet object.</param>
+    /// <param name="cell">The cell reference as a string.</param>
+    /// <returns>The updated ExcelWorksheet object.</returns>
+    public static ExcelWorksheet SetBoldFont(this ExcelWorksheet worksheet, string cell)
     {
         worksheet.Cells[cell].Style.Font.Bold = true;
+        return worksheet;
     }
 
-    public static void SetFontFamily(this ExcelWorksheet worksheet, string cell, string fontName)
+    /// <summary>
+    /// Sets the font family of the specified cell.
+    /// </summary>
+    /// <param name="worksheet">The worksheet object.</param>
+    /// <param name="cell">The cell reference as a string.</param>
+    /// <param name="fontName">The name of the font.</param>
+    /// <returns>The updated ExcelWorksheet object.</returns>
+    public static ExcelWorksheet SetFontFamily(this ExcelWorksheet worksheet, string cell, string fontName)
     {
         worksheet.Cells[cell].Style.Font.Name = fontName;
+        return worksheet;
     }
 
-    public static void SetMenuDefaultStyling(this ExcelWorksheet worksheet, Color backgroundColor, params string[] cells)
+    /// <summary>
+    /// Sets default styling for menu cells.
+    /// </summary>
+    /// <param name="worksheet">The worksheet object.</param>
+    /// <param name="backgroundColor">The background color for the menu.</param>
+    /// <param name="cells">An array of cell references to style.</param>
+    /// <returns>The updated ExcelWorksheet object.</returns>
+    public static ExcelWorksheet SetMenuDefaultStyling(this ExcelWorksheet worksheet, Color backgroundColor, params string[] cells)
     {
         foreach (var cell in cells)
         {
@@ -361,9 +442,17 @@ internal static class ExcelSheetFactoryExtensions
             worksheet.SetBackgroundColor(cell, backgroundColor);
             worksheet.SetFontSize(cell, 12);
         }
+
+        return worksheet;
     }
 
-    public static void SetGlobalStyling(this ExcelWorksheet worksheet, string fontName)
+    /// <summary>
+    /// Sets global styling for the worksheet.
+    /// </summary>
+    /// <param name="worksheet">The worksheet object.</param>
+    /// <param name="fontName">The name of the font to use.</param>
+    /// <returns>The updated ExcelWorksheet object.</returns>
+    public static ExcelWorksheet SetGlobalStyling(this ExcelWorksheet worksheet, string fontName)
     {
         var startCell = worksheet.Dimension.Start;
         var endCell = worksheet.Dimension.End;
@@ -377,9 +466,17 @@ internal static class ExcelSheetFactoryExtensions
                 worksheet.Cells[row, col].Style.VerticalAlignment = ExcelVerticalAlignment.Center;
             }
         }
+
+        return worksheet;
     }
 
-    public static void SetBorder(this ExcelWorksheet worksheet, string cells)
+    /// <summary>
+    /// Adds borders to the specified cells.
+    /// </summary>
+    /// <param name="worksheet">The worksheet object.</param>
+    /// <param name="cells">The range of cells to add borders to.</param>
+    /// <returns>The updated ExcelWorksheet object.</returns>
+    public static ExcelWorksheet SetBorder(this ExcelWorksheet worksheet, string cells)
     {
         var cell = worksheet.Cells[cells];
 
@@ -393,9 +490,18 @@ internal static class ExcelSheetFactoryExtensions
         border.Bottom.Color.SetColor(Color.Black);
         border.Left.Color.SetColor(Color.Black);
         border.Right.Color.SetColor(Color.Black);
+
+        return worksheet;
     }
 
-    public static void AutoFitColumns(this ExcelWorksheet worksheet, string cells, double? maxWidth = Constants.ExcelDefaults.MAX_COLUMN_WIDTH)
+    /// <summary>
+    /// Auto-fits the columns for the specified cell range.
+    /// </summary>
+    /// <param name="worksheet">The worksheet object.</param>
+    /// <param name="cells">The range of cells to auto-fit.</param>
+    /// <param name="maxWidth">The maximum width for any column.</param>
+    /// <returns>The updated ExcelWorksheet object.</returns>
+    public static ExcelWorksheet AutoFitColumns(this ExcelWorksheet worksheet, string cells, double? maxWidth = Constants.ExcelDefaults.MAX_COLUMN_WIDTH)
     {
         string[] parts = cells.Split(':');
         string startCell = parts[0];
@@ -433,8 +539,15 @@ internal static class ExcelSheetFactoryExtensions
         {
             worksheet.Column(col).Width = colMaxWidth[col];
         }
+
+        return worksheet;
     }
 
+    /// <summary>
+    /// Gets the data range for the worksheet.
+    /// </summary>
+    /// <param name="worksheet">The worksheet object.</param>
+    /// <returns>A tuple containing the start and end cell references.</returns>
     public static (string, string) GetWorksheetDataRange(this ExcelWorksheet worksheet)
     {
         int startRow = worksheet.Dimension.Start.Row;

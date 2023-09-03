@@ -1,6 +1,4 @@
-﻿using AzulDeployFileGenerator.Domain.Models.Options;
-
-ASCIIArt.PrintWelcome();
+﻿ASCIIArt.PrintWelcome();
 
 var logger = LoggerFactory.Create(builder =>
 {

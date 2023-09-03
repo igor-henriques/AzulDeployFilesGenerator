@@ -7,6 +7,8 @@ public static class Constants
     public const string PUBLISHER_FILE_IDENTIFIER = ": EventPublisher<";
     public const string SUBSCRIBER_FILE_IDENTIFIER = ": EventSubscriber<";
     public const string DEFAULT_ONLINE_KUBERNETES_NAMESPACE = "deploy-generator";
+    public const string DEFAULT_QUIT_CMD_FILES_SELECTION_CHAR = "q";
+    public const int DEFAULT_EXPOSED_API_PORT_DOCKERFILE = 80;
 
     public static class ExcelDefaults
     {

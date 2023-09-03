@@ -26,4 +26,9 @@ public sealed record CliFileGenerateModel
     {
         return FileName is Constants.FileNames.K8sYaml or Constants.FileNames.IsaBkoYaml;
     }
+
+    public static implicit operator CliFileGenerateModel(string fileName)
+    {
+        return new CliFileGenerateModel(fileName, true);
+    }
 }

@@ -8,7 +8,14 @@ public sealed record CliCommandOptions
     public string ApplicationName { get; private set; }
     public string DeployName { get; private set; }
     public string ImageName { get; private set; }
+    public bool GenerateAllFiles { get; private set; }
     public string IsaBkoImageName => ImageName.Replace(Constants.ImageNames.BASE_AZUL_ACR_NAME, Constants.ImageNames.BASE_ONLINE_ACR_NAME);
+
+    public CliCommandOptions SetGenerateAllFiles(bool generateAllFiles)
+    {
+        GenerateAllFiles = generateAllFiles;
+        return this;
+    }
 
     public CliCommandOptions SetSolutionPath(string solutionPath)
     {

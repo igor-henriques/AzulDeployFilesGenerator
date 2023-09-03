@@ -1,9 +1,8 @@
-﻿using AzulDeployFileGenerator.Domain.Models.Options;
-using Microsoft.Extensions.Options;
-using System.Text.RegularExpressions;
+﻿namespace AzulDeployFileGenerator.Domain.Validators;
 
-namespace AzulDeployFileGenerator.Domain.Validators;
-
+/// <summary>
+/// Validates the content of <see cref="AppSettings"/>.
+/// </summary>
 internal sealed class AppSettingsValidator : IValidator<AppSettings>
 {
     private readonly List<string> _errors = new();
@@ -12,6 +11,12 @@ internal sealed class AppSettingsValidator : IValidator<AppSettings>
     private readonly IOptions<CliCommandOptions> _cliOptions;
     private readonly ILogger<AppSettingsValidator> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AppSettingsValidator"/> class.
+    /// </summary>
+    /// <param name="solutionFilesService">Service for solution files operations.</param>
+    /// <param name="logger">The logger.</param>
+    /// <param name="cliOptions">CLI command options.</param>
     public AppSettingsValidator(
         ISolutionFilesService solutionFilesService,
         ILogger<AppSettingsValidator> logger,
@@ -22,6 +27,11 @@ internal sealed class AppSettingsValidator : IValidator<AppSettings>
         _cliOptions = cliOptions;
     }
 
+    /// <summary>
+    /// Validates the <see cref="AppSettings"/> and throws a <see cref="ValidationException"/> if it fails.
+    /// </summary>
+    /// <param name="appSettings">The settings to validate.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     public async Task ValidateAndThrowAsync(AppSettings appSettings, CancellationToken cancellationToken = default)
     {
         await ValidateServiceClients(appSettings.ServiceClients, cancellationToken);
@@ -34,6 +44,11 @@ internal sealed class AppSettingsValidator : IValidator<AppSettings>
         }
     }
 
+    /// <summary>
+    /// Validates that there are no empty fields in the <see cref="AppSettings"/>.
+    /// </summary>
+    /// <param name="appSettings">The settings to validate.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     private async Task ValidateEmptyFields(object appSettings, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -83,7 +98,11 @@ internal sealed class AppSettingsValidator : IValidator<AppSettings>
         }
     }
 
-
+    /// <summary>
+    /// Validates the service clients in the <see cref="AppSettings"/>.
+    /// </summary>
+    /// <param name="serviceClients">The service clients to validate.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     private async Task ValidateServiceClients(List<ServiceClient> serviceClients, CancellationToken cancellationToken = default)
     {
         if (serviceClients is null || serviceClients?.Count is 0)
@@ -119,6 +138,11 @@ internal sealed class AppSettingsValidator : IValidator<AppSettings>
         }
     }
 
+    /// <summary>
+    /// Validates the events in the <see cref="AppSettings"/>.
+    /// </summary>
+    /// <param name="events">The events to validate.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     private async Task ValidateEvents(List<Event> events, CancellationToken cancellationToken = default)
     {
         if (events == null)
@@ -148,6 +172,13 @@ internal sealed class AppSettingsValidator : IValidator<AppSettings>
         }
     }
 
+    /// <summary>
+    /// Checks if the event is valid.
+    /// </summary>
+    /// <param name="eventId">The event Id to validate.</param>
+    /// <param name="pattern">The pattern to match.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>True if the event is valid, otherwise false.</returns>
     private async Task<bool> IsEventValid(string eventId, string pattern, CancellationToken cancellationToken)
     {
         var csharpFiles = await _solutionFilesService.GetCSharpFileWhereContainsText(eventId, cancellationToken: cancellationToken);

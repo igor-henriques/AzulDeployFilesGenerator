@@ -20,7 +20,7 @@ public static class CliParser
                 throw new ApplicationException(string.Format(Constants.Messages.INVALID_ARG_TRIGGER_ERROR_MESSAGE, argTrigger));
             }
 
-            var argContent = args.ElementAt(triggerIndex + 1);
+            var argContent = args.Length > triggerIndex + 1 ? args.ElementAt(triggerIndex + 1) : string.Empty;
 
             yield return new CliCommand(argContent, argTrigger);
         }

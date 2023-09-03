@@ -14,3 +14,6 @@ global using System.Reflection;
 global using System.Text;
 global using AzulDeployFileGenerator.Domain.Converters;
 global using OfficeOpenXml;
+global using AzulDeployFileGenerator.Domain.Models.Options;
+global using Microsoft.Extensions.Options;
+global using System.Text.RegularExpressions;
