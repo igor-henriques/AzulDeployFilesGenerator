@@ -12,3 +12,5 @@ global using System.ComponentModel.DataAnnotations;
 global using System.Drawing;
 global using System.Reflection;
 global using System.Text;
+global using AzulDeployFileGenerator.Domain.Converters;
+global using OfficeOpenXml;
