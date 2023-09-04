@@ -6,7 +6,7 @@ public sealed class CliParserTests
     public void ParseArgsAsCommands_Should_ThrowException_When_NoArgsArePassed()
     {
         // Arrange
-        var args = new string[] { };
+        var args = Array.Empty<string>();
 
         // Act & Assert
         Assert.Throws<ApplicationException>(() => CliParser.ParseArgsAsCommands(args).ToList());

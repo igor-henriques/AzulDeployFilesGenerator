@@ -85,7 +85,7 @@ public sealed record CliCommand
 
     /// <summary>
     /// Validates the CLI command.
-    /// </summary>
+    /// </summary>                                                          
     private void Validate()
     {
         if (IsOutputPathCommandType(Trigger) || IsSolutionPathCommandType(Trigger))

@@ -3,78 +3,115 @@
 public sealed class CliCommandTests
 {
     [Theory]
-    [InlineData(".", "-output", true)]
-    [InlineData("C:/Test/Output", "-output", true)]
-    [InlineData(".", "--solution-path", false)]
-    [InlineData("C:/Test/Solution", "--solution-path", false)]
-    public void IsOutputPathCommandType_ShouldReturnCorrectValue(string content, string trigger, bool expected)
+    [InlineData("-output", ".")]
+    [InlineData("-o", ".")]
+    public void Should_Set_Content_And_Trigger_For_Valid_OutputPath_Command(string trigger, string content)
     {
-        // Arrange
-        if (content is not "." && !Directory.Exists(content))
-        {
-            Directory.CreateDirectory(content);
-        }
-
-        var command = new CliCommand(content, trigger);
-
-        // Act
-        var result = CliCommand.IsOutputPathCommandType(command.Trigger);
+        // Arrange & Act
+        var cliCommand = new CliCommand(content, trigger);
 
         // Assert
-        Assert.Equal(expected, result);
+        cliCommand.Trigger.Should().Be(trigger);
+        cliCommand.Content.Should().Be(Directory.GetCurrentDirectory());
+    }
 
-        if (content is not ".")
-        {
-            Directory.Delete(content);
-        }
+    [Fact]
+    public void Should_Throw_Exception_For_Invalid_OutputPath_Command()
+    {
+        // Arrange
+        string trigger = "-output";
+        string invalidContent = "InvalidPath";
+
+        // Act & Assert
+        Assert.Throws<InvalidOperationException>(() => new CliCommand(invalidContent, trigger));
     }
 
     [Theory]
-    [InlineData(".", "--solution-path", true)]
-    [InlineData("C:/Test/Solution", "--solution-path", true)]
-    [InlineData(".", "-output", false)]
-    [InlineData("C:/Test/Output", "-output", false)]
-    public void IsSolutionPathCommandType_ShouldReturnCorrectValue(string content, string trigger, bool expected)
+    [InlineData("--solution-path", ".")]
+    [InlineData("-sp", ".")]
+    public void Should_Set_Content_And_Trigger_For_Valid_SolutionPath_Command(string trigger, string content)
     {
-        // Arrange
-        if (content is not "." && !Directory.Exists(content))
-        {
-            Directory.CreateDirectory(content);
-        }
-
-        var command = new CliCommand(content, trigger);
-
-        // Act
-        var result = CliCommand.IsSolutionPathCommandType(command.Trigger);
+        // Arrange & Act
+        var cliCommand = new CliCommand(content, trigger);
 
         // Assert
-        Assert.Equal(expected, result);
+        cliCommand.Trigger.Should().Be(trigger);
+        cliCommand.Content.Should().Be(Directory.GetCurrentDirectory());
+    }
 
-        if (content is not ".")
-        {
-            Directory.Delete(content);
-        }
+    [Theory]
+    [InlineData("-output", true)]
+    [InlineData("-o", true)]
+    [InlineData("-unknown", false)]
+    public void IsOutputPathCommandType_Should_Return_Expected_Result(string trigger, bool expected)
+    {
+        // Act & Assert
+        CliCommand.IsOutputPathCommandType(trigger).Should().Be(expected);
+    }
+
+    [Theory]
+    [InlineData("--solution-path", true)]
+    [InlineData("-sp", true)]
+    [InlineData("-unknown", false)]
+    public void IsSolutionPathCommandType_Should_Return_Expected_Result(string trigger, bool expected)
+    {
+        // Act & Assert
+        CliCommand.IsSolutionPathCommandType(trigger).Should().Be(expected);
+    }
+
+    [Theory]
+    [InlineData("--app-type", "api")]
+    [InlineData("--application-type", "consumer")]
+    [InlineData("-at", "cronjob")]
+    public void Should_Set_Content_And_Trigger_For_Valid_AppType_Command(string trigger, string content)
+    {
+        // Arrange & Act
+        var cliCommand = new CliCommand(content, trigger);
+
+        // Assert
+        cliCommand.Trigger.Should().Be(trigger);
+        cliCommand.Content.Should().Be(content);
     }
 
     [Fact]
-    public void CliCommand_WithInvalidDirectory_ShouldThrowException()
+    public void Should_Throw_Exception_For_Invalid_AppType_Command()
     {
         // Arrange
-        var content = "InvalidDirectory";
-        var trigger = "-output";
+        string trigger = "--app-type";
+        string invalidContent = "InvalidAppType";
 
         // Act & Assert
-        Assert.Throws<InvalidOperationException>(() => new CliCommand(content, trigger));
+        Assert.Throws<InvalidOperationException>(() => new CliCommand(invalidContent, trigger));
     }
 
-    [Fact]
-    public void CliCommand_WithValidDirectory_ShouldNotThrowException()
+    [Theory]
+    [InlineData("--app-type", true)]
+    [InlineData("--application-type", true)]
+    [InlineData("-at", true)]
+    [InlineData("-unknown", false)]
+    public void IsAppTypeCommandType_Should_Return_Expected_Result(string trigger, bool expected)
     {
-        // Arrange
-        var content = Directory.GetCurrentDirectory();
-        var trigger = "-output";
-
         // Act & Assert
-        Assert.Null(Record.Exception(() => new CliCommand(content, trigger)));
+        CliCommand.IsAppTypeCommandType(trigger).Should().Be(expected);
+    }
+
+    [Theory]
+    [InlineData("-output", true)]
+    [InlineData("--solution-path", true)]
+    [InlineData("--app-type", true)]
+    [InlineData("-unknown", false)]
+    public void IsAnyOfRequiredTriggers_Should_Return_Expected_Result(string trigger, bool expected)
+    {
+        // Act & Assert
+        CliCommand.IsAnyOfRequiredTriggers(trigger).Should().Be(expected);
+    }
+
+    [Theory]
+    [InlineData("-output", true)]
+    [InlineData("--unknown-command", false)]
+    public void IsValidCommandTrigger_Should_Return_Expected_Result(string trigger, bool expected)
+    {
+        // Act & Assert
+        CliCommand.IsValidCommandTrigger(trigger).Should().Be(expected);
     }
 }

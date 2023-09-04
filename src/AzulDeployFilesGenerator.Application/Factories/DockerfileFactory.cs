@@ -18,7 +18,7 @@ internal sealed class DockerfileFactory : IDockerfileFactory
 
     private Task<StringBuilder> GenerateDockerfileBuilder(CancellationToken cancellationToken = default)
     {
-        _solutionFilesService.ValidateNugetConfig();
+        _solutionFilesService.ValidateNugetConfig(cancellationToken: cancellationToken);
 
         StringBuilder builder = new();
 

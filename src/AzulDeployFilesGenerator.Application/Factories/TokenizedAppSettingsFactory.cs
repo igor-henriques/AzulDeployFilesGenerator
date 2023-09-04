@@ -53,6 +53,11 @@ internal sealed class TokenizedAppSettingsFactory : ITokenizedAppSettingsFactory
     /// <returns>A JObject with tokenized AppSettings.</returns>
     private static JObject TokenizeAppSettings(object obj, string path = "")
     {
+        if (obj is null)
+        {
+            return default;
+        }
+
         if (obj.GetType().GetCustomAttribute<IgnoreDockerTokenization>() != null)
         {
             return JToken.FromObject(obj) as JObject;
