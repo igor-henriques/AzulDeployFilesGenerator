@@ -1,4 +1,7 @@
-﻿namespace AzulDeployFilesGenerator.Application.Services;
+﻿using Microsoft.Extensions.Logging;
+using System.Text.RegularExpressions;
+
+namespace AzulDeployFilesGenerator.Application.Services;
 
 internal sealed class SolutionFilesService : ISolutionFilesService
 {
@@ -111,6 +114,14 @@ internal sealed class SolutionFilesService : ISolutionFilesService
             var classRawText = await File.ReadAllTextAsync(file, cancellationToken);
 
             if (classRawText.Contains(text))
+            {
+                return true;
+            }
+
+            const string pattern = @"nameof\(([^)]+)\)";
+
+            Match match = Regex.Match(classRawText, pattern);
+            if (match.Success && text.Contains(match.Groups[1].Value))
             {
                 return true;
             }

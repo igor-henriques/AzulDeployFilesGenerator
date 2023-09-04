@@ -4,6 +4,7 @@ internal sealed class ExcelSheetFactory : IExcelSheetFactory
 {
     private readonly IOptions<CliCommandOptions> _cliOptions;
     private readonly IOptions<ApplicationDefaultsOptions> _appDefaultsOptions;
+    private readonly ILogger<ExcelSheetFactory> _logger;
     private readonly ISolutionFilesService _solutionFilesService;
 
     /// <summary>
@@ -15,13 +16,15 @@ internal sealed class ExcelSheetFactory : IExcelSheetFactory
     public ExcelSheetFactory(
         IOptions<CliCommandOptions> cliOptions,
         ISolutionFilesService solutionFilesService,
-        IOptions<ApplicationDefaultsOptions> appDefaultsOptions)
+        IOptions<ApplicationDefaultsOptions> appDefaultsOptions,
+        ILogger<ExcelSheetFactory> logger)
     {
         _cliOptions = cliOptions ?? throw new ArgumentNullException(nameof(cliOptions));
         _solutionFilesService = solutionFilesService ?? throw new ArgumentNullException(nameof(solutionFilesService));
         _appDefaultsOptions = appDefaultsOptions ?? throw new ArgumentNullException(nameof(appDefaultsOptions));
 
         ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+        _logger = logger;
     }
 
     /// <summary>
@@ -60,17 +63,22 @@ internal sealed class ExcelSheetFactory : IExcelSheetFactory
     /// <returns>A Task representing the asynchronous operation.</returns>
     private async Task GenerateInfraAsCodeWorksheet(ExcelPackage excelPackage, AppSettings appSettings, CancellationToken cancellationToken = default)
     {
+        const string worksheetName = "Infra As Code";
+        
         var hasSubscribers = await _solutionFilesService.HasAnySubscribers(cancellationToken: cancellationToken);
         var hasPublishers = await _solutionFilesService.HasAnyPublishers(cancellationToken: cancellationToken);
 
-        var variables = appSettings.GetRawEnvVariables();
-
-        var infraAsCodeWorksheet = excelPackage.Workbook.Worksheets.Add("Infra As Code");
+        var variables = appSettings.GetRawEnvVariables();        
 
         if (!hasSubscribers && !hasPublishers)
         {
-            throw new ApplicationException(Constants.Messages.NO_APPSETTING_EVENT_CONSUMER_TYPE_ERROR_MESSAGE);
+            _logger.LogWarning("No subscribers or publishers were found in the solution. Skipping {worksheetName} worksheet.\n", 
+                worksheetName);
+
+            return;            
         }
+
+        var infraAsCodeWorksheet = excelPackage.Workbook.Worksheets.Add(worksheetName);
 
         if (hasPublishers)
         {

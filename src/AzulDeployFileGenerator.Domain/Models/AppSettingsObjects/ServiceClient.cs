@@ -11,7 +11,7 @@ public sealed record ServiceClient
     [JsonProperty("timeout")]
     public int Timeout { get; init; }
 
-    [JsonProperty("parameters")]
+    [JsonProperty("parameters", NullValueHandling = NullValueHandling.Ignore)]
     public List<Parameter> Parameters { get; init; }
 
     [JsonIgnore]
