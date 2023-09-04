@@ -35,6 +35,10 @@ public sealed record AppSettings
     [JsonProperty("eventCustomSettings", NullValueHandling = NullValueHandling.Ignore)]
     public EventCustomSettings EventCustomSettings { get; init; }
 
+    [JsonProperty("k8s.schedule", NullValueHandling = NullValueHandling.Ignore)]
+    [IgnoreDockerTokenization(includeOnExcel: true)]
+    public string K8sSchedule { get; init; }
+
     [JsonExtensionData]
     public Dictionary<string, JToken> ExtraProperties { get; init; } = new Dictionary<string, JToken>();
 
@@ -50,9 +54,9 @@ public static class AppSettingsExtensions
     /// </summary>
     /// <param name="obj"></param>    
     /// <returns></returns>
-    public static List<EnvVariable> GetTokenizedEnvVariables(this AppSettings obj)
+    public static List<EnvVariable> GetTokenizedEnvVariables(this AppSettings obj, bool considerExcelExceptionFields = false)
     {
-        return GetEnvVariables(obj, false, path: "");
+        return GetEnvVariables(obj, false, path: "", considerExcelExceptionFields);
     }
 
     /// <summary>
@@ -60,12 +64,12 @@ public static class AppSettingsExtensions
     /// </summary>
     /// <param name="obj"></param>    
     /// <returns></returns>
-    public static List<EnvVariable> GetRawEnvVariables(this AppSettings obj)
+    public static List<EnvVariable> GetRawEnvVariables(this AppSettings obj, bool considerExcelExceptionFields = false)
     {
-        return GetEnvVariables(obj, true, path: "");
+        return GetEnvVariables(obj, true, path: "", considerExcelExceptionFields);
     }
 
-    private static List<EnvVariable> GetEnvVariables(object obj, bool getRawValue, string path = "")
+    private static List<EnvVariable> GetEnvVariables(object obj, bool getRawValue, string path = "", bool considerExcelExceptionFields = false)
     {
         List<EnvVariable> result = new();
 
@@ -104,9 +108,17 @@ public static class AppSettingsExtensions
                 continue;
             }
 
-            if (prop.GetCustomAttribute<IgnoreDockerTokenization>() != null
-                || prop.PropertyType.GetCustomAttribute<IgnoreDockerTokenization>() != null)
+            var ignoreDockerTokenizationAttributeProp = prop.GetCustomAttribute<IgnoreDockerTokenization>();
+            var ignoreDockerTokenizationPropType = prop.PropertyType.GetCustomAttribute<IgnoreDockerTokenization>();
+
+            if (ignoreDockerTokenizationAttributeProp != null || ignoreDockerTokenizationPropType != null)
             {
+                if (ignoreDockerTokenizationAttributeProp?.IncludeOnExcel == true
+                    && considerExcelExceptionFields)
+                {
+                    result.Add(new(path + jsonPropName, value?.ToString()));
+                }
+                
                 continue;
             }
 

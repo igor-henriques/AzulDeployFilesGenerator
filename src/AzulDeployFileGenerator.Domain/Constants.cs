@@ -55,6 +55,7 @@ public static class Constants
         public const string EXCEPTION_GENERATING_SINGLE_FILE_WITH_ERROR_MESSAGE = "Error generating {fileName}. Exception: {exception}\nNo more files to generate.";
         public const string NUGET_CONFIG_KEY_NOT_FOUND_ERROR_MESSAGE = "AzulFramework key not found in the nugetconfig file. Check and try again";
         public const string NUGET_CONFIG_KEY_NOT_DEFINED_ERROR_MESSAGE = "AzulFramework key not defined in the appsettings.json. Check and try again";
+        public const string K8S_SCHEDULE_REQUIRED_ERROR_MESSAGE = "As a cron job, the appsettings.json must have a 'k8s.schedule' property defined in the root. Check and try again.";
     }
 
     public static class FileNames

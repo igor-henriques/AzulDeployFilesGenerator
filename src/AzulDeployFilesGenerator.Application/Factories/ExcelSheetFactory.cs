@@ -68,7 +68,7 @@ internal sealed class ExcelSheetFactory : IExcelSheetFactory
         var hasSubscribers = await _solutionFilesService.HasAnySubscribers(cancellationToken: cancellationToken);
         var hasPublishers = await _solutionFilesService.HasAnyPublishers(cancellationToken: cancellationToken);
 
-        var variables = appSettings.GetRawEnvVariables();        
+        var variables = appSettings.GetRawEnvVariables(considerExcelExceptionFields: true);        
 
         if (!hasSubscribers && !hasPublishers)
         {
@@ -335,7 +335,7 @@ internal sealed class ExcelSheetFactory : IExcelSheetFactory
         tokenizerWorksheet.Cells["D1"].Value = "STG";
         tokenizerWorksheet.Cells["E1"].Value = "PRD";
 
-        var variables = appSettings.GetRawEnvVariables();
+        var variables = appSettings.GetRawEnvVariables(considerExcelExceptionFields: true);
         var tokenizedFilePath = $"{_cliOptions.Value.ApplicationName}/src/{Constants.FileNames.K8sYaml}";
 
         tokenizerWorksheet.Cells["A2"].Value = tokenizedFilePath;

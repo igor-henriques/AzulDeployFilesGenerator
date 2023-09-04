@@ -38,6 +38,11 @@ internal sealed class AppSettingsValidator : IValidator<AppSettings>
         await ValidateEmptyFields(appSettings, cancellationToken);
         await ValidateEvents(appSettings.Events, cancellationToken);
 
+        if (_cliOptions.Value.ApplicationType is EApplicationType.CronJob && string.IsNullOrEmpty(appSettings.K8sSchedule))
+        {
+            _errors.Add(Constants.Messages.K8S_SCHEDULE_REQUIRED_ERROR_MESSAGE);
+        }
+
         if (_errors.Any())
         {
             throw new ValidationException(string.Join('\n', _errors));
