@@ -3,17 +3,19 @@
 public sealed class CliServiceTests
 {
     private readonly Mock<IOptions<CliCommandOptions>> _mockCliOptions;
+    private readonly Mock<ILogger<CliService>> _mockLogger;
 
     public CliServiceTests()
     {
         _mockCliOptions = new Mock<IOptions<CliCommandOptions>>();
+        _mockLogger = new Mock<ILogger<CliService>>();
     }
 
     [Fact]
     public void Constructor_Should_Throw_ArgumentNullException_When_Options_Are_Null()
     {
         // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new CliService(null));
+        Assert.Throws<ArgumentNullException>(() => new CliService(null, null));
     }
 
     [Fact]
@@ -22,7 +24,7 @@ public sealed class CliServiceTests
         // Arrange
         var options = new CliCommandOptions().SetGenerateAllFiles(true);
         _mockCliOptions.Setup(o => o.Value).Returns(options);
-        var service = new CliService(_mockCliOptions.Object);
+        var service = new CliService(_mockCliOptions.Object, _mockLogger.Object);
 
         // Act
         var result = service.GetRequestedFilesToGenerate();
@@ -39,7 +41,7 @@ public sealed class CliServiceTests
 
         _mockCliOptions.Setup(o => o.Value).Returns(options);
 
-        var service = new CliService(_mockCliOptions.Object);
+        var service = new CliService(_mockCliOptions.Object, _mockLogger.Object);
 
         // Here we would mock Console.ReadLine to return specific choices
         // However, since Console.ReadLine is static, we can't easily mock it.
@@ -55,7 +57,7 @@ public sealed class CliServiceTests
         // Arrange
         var options = new CliCommandOptions();
         _mockCliOptions.Setup(o => o.Value).Returns(options);
-        var service = new CliService(_mockCliOptions.Object);
+        var service = new CliService(_mockCliOptions.Object, _mockLogger.Object);
 
         // Act
         // Call a method that would end up calling EnsureK8sDeploysGeneratedTogether

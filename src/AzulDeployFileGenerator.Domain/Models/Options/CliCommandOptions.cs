@@ -11,6 +11,10 @@ public sealed record CliCommandOptions
     public bool GenerateAllFiles { get; private set; }
     public string IsaBkoImageName => ImageName.Replace(Constants.ImageNames.BASE_AZUL_ACR_NAME, Constants.ImageNames.BASE_ONLINE_ACR_NAME);
 
+    public bool HasRequiredCommands => !string.IsNullOrWhiteSpace(SolutionPath) 
+        && !string.IsNullOrWhiteSpace(OutputPath)
+        && ApplicationType is not EApplicationType.None;
+
     public CliCommandOptions SetGenerateAllFiles(bool generateAllFiles)
     {
         GenerateAllFiles = generateAllFiles;
@@ -19,12 +23,27 @@ public sealed record CliCommandOptions
 
     public CliCommandOptions SetSolutionPath(string solutionPath)
     {
+        if (!Directory.Exists(solutionPath))
+        {
+            throw new InvalidOperationException(string.Format(Constants.Messages.INVALID_PATH_ERROR_MESSAGE, solutionPath));
+        }
+
         SolutionPath = solutionPath;
         return this;
     }
 
     public CliCommandOptions SetOutputPath(string outputPath)
     {
+        if (!Directory.Exists(outputPath))
+        {
+            throw new InvalidOperationException(string.Format(Constants.Messages.INVALID_PATH_ERROR_MESSAGE, outputPath));
+        }
+
+        if (outputPath is ".")
+        {
+            outputPath = Directory.GetCurrentDirectory();
+        }
+
         OutputPath = outputPath;
         return this;
     }

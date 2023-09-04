@@ -26,21 +26,36 @@ public static class ConfigureContainer
         var appType = commands.FirstOrDefault(command => CliCommand.IsAppTypeCommandType(command.Trigger))?.Content;
         var deployName = commands.FirstOrDefault(command => CliCommand.IsDeployNameCommandType(command.Trigger))?.Content;
         var imageName = commands.FirstOrDefault(command => CliCommand.IsImageNameCommandType(command.Trigger))?.Content;
-        var generateAllFiles = commands.Any(command => CliCommand.IsGenerateAllFilesCommandType(command.Trigger));
-
-        if (new string?[] { solutionPath, outputPath, appType }.Any(string.IsNullOrWhiteSpace))
-        {
-            throw new ApplicationException(Constants.Messages.INSUFFICIENT_ARGUMENTS_ERROR_MESSAGE);
-        }
+        var generateAllFiles = commands.Any(command => CliCommand.IsGenerateAllFilesCommandType(command.Trigger));        
 
         hostBuilder.ConfigureServices(services => services.Configure<CliCommandOptions>(options =>
         {
-            options.SetSolutionPath(solutionPath)
-                   .SetOutputPath(outputPath)
-                   .SetApplicationType(appType)
-                   .SetDeployName(deployName)
-                   .SetImageName(imageName)
-                   .SetGenerateAllFiles(generateAllFiles);
+            if (!string.IsNullOrWhiteSpace(solutionPath))
+            {
+                options.SetSolutionPath(solutionPath);
+            }
+
+            if (!string.IsNullOrWhiteSpace(outputPath))
+            {
+                options.SetOutputPath(outputPath);
+            }
+
+            if (!string.IsNullOrWhiteSpace(appType))
+            {
+                options.SetApplicationType(appType);
+            }
+
+            if (!string.IsNullOrWhiteSpace(deployName))
+            {
+                options.SetDeployName(deployName);
+            }
+
+            if (!string.IsNullOrWhiteSpace(imageName))
+            {
+                options.SetImageName(imageName);
+            }
+
+            options.SetGenerateAllFiles(generateAllFiles);
         }));
 
         return hostBuilder;

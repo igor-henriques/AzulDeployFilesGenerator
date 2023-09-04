@@ -1,15 +1,16 @@
-﻿using System.Runtime.CompilerServices;
-using Console = System.Console;
+﻿using Console = System.Console;
 
 namespace AzulDeployFileGenerator.Infrastructure.CLI;
 
 internal sealed class CliService : ICliService
 {
     private readonly IOptions<CliCommandOptions> _cliOptions;
+    private readonly ILogger<CliService> _logger;
 
-    public CliService(IOptions<CliCommandOptions> cliOptions)
+    public CliService(IOptions<CliCommandOptions> cliOptions, ILogger<CliService> logger)
     {
         _cliOptions = cliOptions ?? throw new ArgumentNullException(nameof(cliOptions)); ;
+        _logger = logger;
     }
 
     private readonly List<CliFileGenerateModel> _files = new()
@@ -22,6 +23,90 @@ internal sealed class CliService : ICliService
         new(fileName: Constants.FileNames.DockerfileOnline, isToGenerate: false),
         new(fileName: Constants.FileNames.DeploySheet, isToGenerate: false) // Format for getting the project name from the cli options
     };
+
+    /// <summary>
+    /// Resolves all required command-line options by prompting the user.
+    /// </summary>
+    public void ResolveRequiredCommands()
+    {
+        _logger.LogWarning(Constants.Messages.INSUFFICIENT_ARGUMENTS_WARNING_MESSAGE);
+
+        GetRequiredOutputPath();
+        GetRequiredSolutionPath();
+        GetRequiredApplicationType();
+    }
+
+    /// <summary>
+    /// Prompts the user to provide a valid output path and sets it in the CLI options.
+    /// Continues to prompt until a valid path is entered.
+    /// </summary>
+    private void GetRequiredOutputPath()
+    {
+        bool isValidOutputPath = false;
+
+        while (!isValidOutputPath)
+        {
+            try
+            {
+                var outputPath = GetInput(Constants.Messages.GET_OUTPUT_PATH_MESSAGE);
+                _cliOptions.Value.SetOutputPath(outputPath);
+                isValidOutputPath = true;
+            }
+            catch (Exception)
+            {
+                Console.WriteLine(Constants.Messages.INVALID_INPUT_ERROR_MESSAGE);
+                Console.ReadKey();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Prompts the user to provide a valid solution path and sets it in the CLI options.
+    /// Continues to prompt until a valid path is entered.
+    /// </summary>
+    private void GetRequiredSolutionPath()
+    {
+        bool isValidSolutionPath = false;
+
+        while (!isValidSolutionPath)
+        {
+            try
+            {
+                var solutionPath = GetInput(Constants.Messages.GET_SOLUTION_PATH_MESSAGE);
+                _cliOptions.Value.SetSolutionPath(solutionPath);
+                isValidSolutionPath = true;
+            }
+            catch (Exception)
+            {
+                Console.WriteLine(Constants.Messages.INVALID_INPUT_ERROR_MESSAGE);
+                Console.ReadKey();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Prompts the user to provide a valid application type and sets it in the CLI options.
+    /// Continues to prompt until a valid application type is entered.
+    /// </summary>
+    private void GetRequiredApplicationType()
+    {
+        bool isValidApplicationType = false;
+
+        while (!isValidApplicationType)
+        {
+            try
+            {
+                var applicationType = GetInput(Constants.Messages.GET_AN_APPLICATION_TYPE_MESSAGE);                
+                _cliOptions.Value.SetApplicationType(applicationType);
+                isValidApplicationType = true;
+            }
+            catch (Exception)
+            {
+                Console.WriteLine(Constants.Messages.INVALID_INPUT_ERROR_MESSAGE);
+                Console.ReadKey();
+            }
+        }
+    }
 
     /// <summary>
     /// Interacts with the user via command line input to get the files to generate.

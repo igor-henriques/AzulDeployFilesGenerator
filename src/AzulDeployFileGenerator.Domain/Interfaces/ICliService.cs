@@ -16,4 +16,9 @@ public interface ICliService
     /// Interacts with the user via command line input to get the image name.
     /// </summary>    
     string GetImageName();
+
+    /// <summary>
+    /// Resolves all required command-line options by prompting the user.
+    /// </summary>
+    void ResolveRequiredCommands();
 }

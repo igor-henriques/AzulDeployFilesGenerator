@@ -1,8 +1,7 @@
 {
   "profiles": {
     "AzulDeployFilesGenerator.Console": {
-      "commandName": "Project",
-      "commandLineArgs": "-o . -sp C:\\Users\\User\\source\\repos\\Maintenance.Equipment.MEL.Producer\\src -at cronjob -dn mnt-eqp-mel -in acrdevopsbr.azurecr.io/maintenance/equipment/mel/producer:latest"
+      "commandName": "Project"
     }
   }
 }

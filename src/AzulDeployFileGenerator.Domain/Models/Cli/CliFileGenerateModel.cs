@@ -24,7 +24,9 @@ public sealed record CliFileGenerateModel
 
     public bool RequiresDeployName()
     {
-        return FileName is Constants.FileNames.K8sYaml or Constants.FileNames.IsaBkoYaml;
+        return FileName is Constants.FileNames.K8sYaml 
+            or Constants.FileNames.IsaBkoYaml 
+            || FileName.Replace("{0}", string.Empty).Contains(".xlsx");
     }
 
     public static implicit operator CliFileGenerateModel(string fileName)

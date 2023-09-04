@@ -4,11 +4,6 @@ public static class CliParser
 {
     public static IEnumerable<CliCommand> ParseArgsAsCommands(string[] args)
     {
-        if (!args.Any(CliCommand.IsAnyOfRequiredTriggers))
-        {
-            throw new ApplicationException(Constants.Messages.INSUFFICIENT_ARGUMENTS_ERROR_MESSAGE);
-        }
-
         var triggersIndexes = GetIndexesWhereContainsDashes(args);
 
         foreach (var triggerIndex in triggersIndexes)

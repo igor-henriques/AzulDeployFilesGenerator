@@ -3,16 +3,6 @@
 public sealed class CliParserTests
 {
     [Fact]
-    public void ParseArgsAsCommands_Should_ThrowException_When_NoArgsArePassed()
-    {
-        // Arrange
-        var args = Array.Empty<string>();
-
-        // Act & Assert
-        Assert.Throws<ApplicationException>(() => CliParser.ParseArgsAsCommands(args).ToList());
-    }
-
-    [Fact]
     public void ParseArgsAsCommands_Should_ThrowException_When_ArgTriggerIsUnknown()
     {
         // Arrange

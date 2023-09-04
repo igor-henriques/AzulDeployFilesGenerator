@@ -11,3 +11,4 @@ global using AzulDeployFileGenerator.Domain.Interfaces;
 global using AzulDeployFilesGenerator.Application.Factories;
 global using AzulDeployFileGenerator.Domain.Models.AppSettingsObjects;
 global using Newtonsoft.Json.Linq;
+global using Microsoft.Extensions.Logging;

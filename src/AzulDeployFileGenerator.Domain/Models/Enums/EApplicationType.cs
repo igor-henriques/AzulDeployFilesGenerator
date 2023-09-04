@@ -2,6 +2,7 @@
 
 public enum EApplicationType : byte
 {
+    None,
     Consumer,
     CronJob,
     Api

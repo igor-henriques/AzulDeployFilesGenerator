@@ -30,6 +30,11 @@ internal sealed class FileGeneratorOrchestrator : IOrchestrator
 
     public async Task OrchestrateAsync(CancellationToken cancellationToken = default)
     {
+        if (!_cliOptions.Value.HasRequiredCommands)
+        {
+            _cliService.ResolveRequiredCommands();
+        }
+
         _logger.LogInformation(Constants.Messages.EXECUTING_DOTNET_CLEAN_MESSAGE);
         _solutionFilesService.CleanSolutionFiles();
         _logger.LogInformation(Constants.Messages.SOLUTION_CLEANED);
